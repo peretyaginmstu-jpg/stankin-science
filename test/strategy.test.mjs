@@ -2,7 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildStrategy, STRATEGY_THRESHOLDS } from '../src/lib/strategy.mjs';
 
-const group = (extra = {}) => ({ id: 'machining', n: 100, nP1: 50, nP2: 50, worldP1: 1000, worldP2: 1500, fwci: 1.2, fwciN: 100, visible: true, contextStatus: 'ok', ...extra });
+const group = (extra = {}) => {
+  const row = { id: 'machining', n: 100, nP1: 50, nP2: 50, worldP1: 1000, worldP2: 1500, fwci: 1.2, fwciN: 100, visible: true, contextStatus: 'ok', ...extra };
+  row.cohorts ??= { p2: { n: row.nP2, fwci: row.fwci, fwciN: Math.floor(row.nP2 * row.fwciN / (row.n || 1)) } };
+  return row;
+};
 const model = (rows, extra = {}) => ({ meta: { period: { p1: [2016, 2020], p2: [2021, 2025] } }, totals: { nP1: 100, nP2: 100, worldP1: 10000, worldP2: 20000 }, competencies: rows, ...extra });
 
 test('absolute world growth is distinct from a loss of world publication share', () => {
@@ -116,4 +120,18 @@ test('a world direction absent from the first period has no invented growth rati
   assert.equal(r.trend.state, 'unknown');
   assert.equal(r.opportunityScore, null);
   assert.ok(r.confidence.reasons.includes('zero-world-baseline'));
+});
+
+test('historic citation outliers cannot establish strong recent performance', () => {
+  const historical = group({ fwci: 3, cohorts: { p2: { n: 50, fwci: 0.8, fwciN: 50 } } });
+  const row = buildStrategy(model([historical])).rows[0];
+  assert.equal(row.evidence.fwci, 3);
+  assert.equal(row.evidence.fwciP2, 0.8);
+  assert.equal(row.citationState, 'below-world');
+  assert.equal(row.strength.state, 'specialized');
+  const withoutCohort = { ...historical, cohorts: undefined };
+  const missing = buildStrategy(model([withoutCohort])).rows[0];
+  assert.equal(missing.evidence.fwciP2, null);
+  assert.equal(missing.citationState, 'unknown');
+  assert.notEqual(missing.strength.state, 'strong');
 });

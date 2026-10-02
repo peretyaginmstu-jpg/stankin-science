@@ -25,8 +25,9 @@ const inPeriod = (year, [a, b]) => year >= a && year <= b;
 // Сводные показатели группы работ.
 export function summarize(works, { home = 'RU' } = {}) {
   const n = works.length;
-  const withFwci = works.filter((w) => w.fw != null);
-  const withPct = works.filter((w) => w.p != null);
+  // Missing and non-finite values are not measurements. Zero remains valid.
+  const withFwci = works.filter((w) => Number.isFinite(w.fw));
+  const withPct = works.filter((w) => Number.isFinite(w.p));
   const intl = works.filter((w) => w.co.some((c) => c !== home));
   return {
     n,
@@ -39,6 +40,22 @@ export function summarize(works, { home = 'RU' } = {}) {
     intl: round(ratio(intl.length, n)),
     lead: round(ratio(sum(works, (w) => w.lead), n)),
     oa: round(ratio(sum(works, (w) => w.oa), n)),
+  };
+}
+
+// The same summary within a publication-year cohort. The median describes sensitivity
+// to highly cited works; it does not remove them from the mean or the source corpus.
+export function summarizeCohort(works, options = {}) {
+  const summary = summarize(works, options);
+  const values = works.map((w) => w.fw).filter(Number.isFinite).sort((a, b) => a - b);
+  const middle = Math.floor(values.length / 2);
+  const median = values.length === 0 ? null : values.length % 2
+    ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+  return {
+    ...summary,
+    fwciMedian: round(median),
+    fwciCoverage: round(ratio(summary.fwciN, summary.n)),
+    top10Coverage: round(ratio(summary.pctN, summary.n)),
   };
 }
 
@@ -205,8 +222,10 @@ export function buildModel(snapshot, { competencies, thresholds, home = 'RU' }) 
       wP1 += p1;
       wP2 += p2;
     }
-    const ownP1 = list.filter((w) => inPeriod(w.y, period.p1)).length;
-    const ownP2 = list.filter((w) => inPeriod(w.y, period.p2)).length;
+    const listP1 = list.filter((w) => inPeriod(w.y, period.p1));
+    const listP2 = list.filter((w) => inPeriod(w.y, period.p2));
+    const ownP1 = listP1.length;
+    const ownP2 = listP2.length;
     const ctxRaw = snapshot.competencies?.[c.id] ?? null;
     const ctxStatus = !ctxRaw ? 'missing' : ctxRaw.topicKey === topicSetKey(topicIds) ? 'ok' : 'stale';
     const ctx = ctxStatus === 'ok' ? ctxRaw : null;
@@ -219,6 +238,10 @@ export function buildModel(snapshot, { competencies, thresholds, home = 'RU' }) 
       ...s,
       nP1: ownP1,
       nP2: ownP2,
+      cohorts: {
+        p1: summarizeCohort(listP1, { home }),
+        p2: summarizeCohort(listP2, { home }),
+      },
       world: worldN,
       worldP1: wP1,
       worldP2: wP2,

@@ -56,7 +56,7 @@ export const STRATEGY_FORMULAS = Object.freeze({
   momentum: 'clamp(log2(worldShareRatio) / log2(fastWorldShare), 0, 1)',
   worldVolume: 'log1p(worldP2) / log1p(max eligible industry worldP2)',
   opportunityScore: '100 × (momentumWeight × momentum + volumeWeight × worldVolume) / (momentumWeight + volumeWeight)',
-  strengthScore: '100 × weighted mean of log1p(aiP2)/log1p(specializationCeiling), log1p(nP2)/log1p(volumeCeiling), min(fwci/citationCeiling,1); each component clamped to [0,1]; missing components omitted',
+  strengthScore: '100 × weighted mean of log1p(aiP2)/log1p(specializationCeiling), log1p(nP2)/log1p(volumeCeiling), min(fwciP2/citationCeiling,1); each component clamped to [0,1]; missing components omitted',
 });
 
 function citationState(row, thresholds) {
@@ -119,7 +119,10 @@ export function buildStrategy(model, options = {}) {
     const aiP2 = ratio(ownShareP2, worldShareP2);
     const shareP1 = ratio(source.nP1, source.worldP1);
     const shareP2 = ratio(source.nP2, source.worldP2);
-    const citations = citationState(source, thresholds);
+    // Current strength uses the recent cohort, never a pooled historic mean.
+    // Pooled fields remain available as the accumulated research record.
+    const recent = source.cohorts?.p2 ?? { n: source.nP2, fwci: null, fwciN: 0 };
+    const citations = citationState(recent, thresholds);
     const reasons = [];
     if (!valid(source.n) || source.n < thresholds.strongMinWorks) reasons.push('small-total-sample');
     if (!valid(source.nP2) || source.nP2 < thresholds.strongMinRecentWorks) reasons.push('small-recent-sample');
@@ -146,6 +149,9 @@ export function buildStrategy(model, options = {}) {
         worldP1: source.worldP1 ?? null, worldP2: source.worldP2 ?? null,
         fwci: source.fwci ?? null, fwciN: source.fwciN ?? null,
         citationCoverage: round(ratio(source.fwciN, source.n)),
+        fwciP2: recent.fwci ?? null, fwciNP2: recent.fwciN ?? null,
+        citationCoverageP2: round(ratio(recent.fwciN, recent.n)),
+        citationPeriod: period.p2 ?? null,
         contextStatus: source.contextStatus ?? 'missing',
       },
       citationState: citations,
@@ -154,7 +160,7 @@ export function buildStrategy(model, options = {}) {
         score: source.nP2 === 0 ? 0 : weightedScore([
           [logScale(aiP2, thresholds.specializationCeiling), thresholds.strengthSpecializationWeight],
           [logScale(source.nP2, thresholds.volumeCeiling), thresholds.strengthVolumeWeight],
-          [citations !== 'unknown' ? clamp(source.fwci / thresholds.citationCeiling) : null, thresholds.strengthCitationWeight],
+          [citations !== 'unknown' ? clamp(recent.fwci / thresholds.citationCeiling) : null, thresholds.strengthCitationWeight],
         ]),
         aiP1: round(aiP1), aiP2: round(aiP2),
         ownShareP1: round(ownShareP1), ownShareP2: round(ownShareP2),
@@ -193,7 +199,7 @@ export function buildStrategy(model, options = {}) {
   frontline.forEach((row, i) => { row.frontlineRank = i + 1; });
   [...eligible].sort((a, b) => b.trend.worldShareRatio - a.trend.worldShareRatio || b.evidence.worldP2 - a.evidence.worldP2 || a.id.localeCompare(b.id)).forEach((row, i) => { row.relativeGrowthRank = i + 1; });
   return {
-    version: 1, thresholds, period, periodLengths,
+    version: 2, thresholds, period, periodLengths,
     baselines: {
       ownP1: totals.nP1 ?? null, ownP2: totals.nP2 ?? null,
       worldP1: totals.worldP1 ?? null, worldP2: totals.worldP2 ?? null,
@@ -211,7 +217,8 @@ export function buildStrategy(model, options = {}) {
     limitations: [
       'The universe is the configured OpenAlex periods, document types and topic rules, not all machine-tool research.',
       'No observed publications does not establish that a university capability is absent.',
-      'FWCI measures normalised citation performance, not research quality; recent work has shorter citation exposure.',
+      'Current citation state and strength use the recent publication cohort; pooled FWCI remains as historical evidence. Missing recent values are not replaced by pooled values.',
+      'FWCI normalises by year, type and subfield, not research quality. Its publication-year plus three-year window is incomplete for the newest works.',
       'Citation change over time cannot be inferred from the pooled FWCI value.',
       'Scores and action labels are decision-support heuristics; staff, equipment, customer demand and industrial results must be verified before budget decisions.',
       'World opportunity ranking excludes mixed groups and distinguishes cross-cutting groups broader than manufacturing.',

@@ -56,6 +56,10 @@ async function main() {
   }
   const base = build.base ?? '/stankin-science/';
   const files = await walk(dir);
+  const pish = JSON.parse(await readFile(path.join(dir, 'data/pish.json'), 'utf8'));
+  const auditChecks = pish.mathAudit?.checks;
+  if (!Array.isArray(auditChecks) || auditChecks.length === 0) fail('Нет численного аудита научных показателей.');
+  else for (const check of auditChecks) if (!check.passed) fail(`Не сошлась научная проверка: ${check.id}`);
   const rel = (f) => path.relative(dir, f).split(path.sep).join('/');
   const htmlFiles = files.filter((f) => f.endsWith('.html'));
   const pages = new Set(htmlFiles.map(rel));
@@ -131,7 +135,7 @@ async function main() {
   }
 
   // Обязательные файлы
-  for (const f of ['index.html', 'en/index.html', '404.html', 'robots.txt', '.nojekyll', 'data/metrics.json', 'assets/js/site.mjs', 'assets/js/charts/charts.mjs']) {
+  for (const f of ['index.html', 'en/index.html', 'pish/index.html', 'en/pish/index.html', '404.html', 'robots.txt', '.nojekyll', 'data/metrics.json', 'data/pish.json', 'data/pish-loop-ru.svg', 'data/pish-loop-en.svg', 'assets/js/site.mjs', 'assets/js/charts/charts.mjs', 'assets/js/charts/pish.mjs']) {
     if (!(await exists(path.join(dir, f)))) fail(`нет обязательного файла ${f}`);
   }
 

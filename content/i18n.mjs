@@ -20,6 +20,7 @@ export const STRINGS = {
     nav: {
       home: 'Обзор',
       decisions: 'Куда развиваться',
+      pish: 'ПИШ: выбор темы',
       competencies: 'Компетенции',
       trends: 'Мировые тренды',
       collaboration: 'Сотрудничество',
@@ -298,6 +299,7 @@ export const STRINGS = {
     nav: {
       home: 'Overview',
       decisions: 'Development',
+      pish: 'Engineering school',
       competencies: 'Competencies',
       trends: 'World trends',
       collaboration: 'Collaboration',

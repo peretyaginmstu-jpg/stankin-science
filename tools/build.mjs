@@ -20,6 +20,10 @@ import { buildModel } from '../src/lib/metrics.mjs';
 import { buildStrategy } from '../src/lib/strategy.mjs';
 import { buildIndustrialTopics } from '../content/topic-lenses.mjs';
 import { decisionsPage } from '../src/render/strategy.mjs';
+import { buildPishModel } from '../src/lib/pish.mjs';
+import { pishPage, pishLoopSpec } from '../src/render/pish.mjs';
+import { pishLoop } from '../src/charts/pish.mjs';
+import { PISH_REVIEWED_AT, PISH_SOURCES, PISH_REQUIREMENTS, PISH_MINIMUMS, PISH_CANDIDATES } from '../content/pish.mjs';
 import { typograph } from '../src/lib/text.mjs';
 import { makeContext, langPrefix } from '../src/render/kit.mjs';
 import { layout } from '../src/render/layout.mjs';
@@ -59,12 +63,13 @@ const JS_MODULES = [
   ['src/assets/js/site.mjs','assets/js/site.mjs'],
   ['src/charts/charts.mjs','assets/js/charts/charts.mjs'],
   ['src/charts/strategy.mjs','assets/js/charts/strategy.mjs'],
+  ['src/charts/pish.mjs','assets/js/charts/pish.mjs'],
   ['src/lib/text.mjs','assets/js/lib/text.mjs'],
   ['src/lib/format.mjs','assets/js/lib/format.mjs'],
 ];
 
 async function assetVersion() {
-  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css'];
+  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css','src/assets/css/pish.css'];
   const contents = await Promise.all(files.map(file=>readFile(path.join(ROOT,file))));
   const hash = createHash('sha256');
   for (const content of contents) hash.update(content);
@@ -109,6 +114,7 @@ async function main() {
   model.meta.assetVersion = version;
   model.strategy = buildStrategy(model);
   model.industrialTopics = buildIndustrialTopics(snapshot, model);
+  model.pish = buildPishModel(snapshot, model);
 
   // Дополнения для страниц: источники публикаций, английские названия классификации, состав компетенций.
   model.sources = snapshot.stankin.sources ?? {};
@@ -153,6 +159,9 @@ async function main() {
     }
     await render('trends', 'trends/', t.trends.title, t.trends.lead, (ctx) => trendsPage(ctx));
     await render('decisions', 'decisions/', t.nav.decisions, t.site.description, decisionsPage);
+    await render('pish', 'pish/', t.nav.pish, lang === 'ru' ? 'Какую новую ПИШ предложить СТАНКИН: что показывают исследования, что требуется по конкурсу и какой продукт нужен заказчику.' : 'Choosing a new STANKIN engineering school: what research shows, what the competition requires and what product the customer needs.', pishPage);
+    const diagramCtx = makeContext({ lang, model, competencies: COMPETENCIES, taxonomyRu: TAXONOMY, route: 'pish', pageDir: prefix + 'pish/', site: SITE, institution: INSTITUTION });
+    await write(`data/pish-loop-${lang}.svg`, pishLoop(pishLoopSpec(diagramCtx), 1160, { standalone: true }));
     await render('collaboration', 'collaboration/', t.collaboration.title, t.collaboration.lead, (ctx) => collaborationPage(ctx));
     await render('method', 'method/', t.method.title, t.method.lead, (ctx) => methodPage(ctx, { competencies: COMPETENCIES }));
   }
@@ -174,6 +183,7 @@ async function main() {
   const { competencyTopics, ...exportable } = model;
   await write('data/metrics.json', `${JSON.stringify({ ...exportable, competencyTopics, competencyNames: Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.name])) }, null, 1)}\n`);
   await write('data/strategy.json', `${JSON.stringify({ ...model.strategy, industrialTopics: model.industrialTopics }, null, 2)}\n`);
+  await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES }, null, 2)}\n`);
   await write('data/competencies.csv', csv(
     ['id', 'name_ru', 'name_en', 'works', 'world_works', 'world_share', 'specialisation_index', 'fwci', 'top10_share', 'intl_share', 'growth_university', 'growth_world', 'rank_russia', 'rank_world', 'topics'],
     model.competencies.map((c) => {

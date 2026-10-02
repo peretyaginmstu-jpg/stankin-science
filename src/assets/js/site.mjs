@@ -3,8 +3,9 @@
 
 import { RENDERERS } from './charts/charts.mjs';
 import { strategyMatrix, capabilityHeatmap } from './charts/strategy.mjs';
+import { pishLoop, cohortsChart } from './charts/pish.mjs';
 
-const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap };
+const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap, 'pish-loop': pishLoop, 'pish-cohorts': cohortsChart };
 
 const lang = document.documentElement.lang || 'ru';
 
@@ -218,6 +219,62 @@ for (const button of document.querySelectorAll('[data-horizon]')) {
     for (const panel of section.querySelectorAll('[data-horizon-panel]')) panel.hidden = panel.dataset.horizonPanel !== button.dataset.horizon;
   });
 }
+
+// ---------- материалы ПИШ для совещания ----------
+for (const button of document.querySelectorAll('[data-pish-projector]')) {
+  button.addEventListener('click', () => {
+    const enabled = !document.body.classList.contains('pish-projector');
+    document.body.classList.toggle('pish-projector', enabled);
+    button.setAttribute('aria-pressed', String(enabled));
+    document.querySelectorAll('figure.chart').forEach(fig => fig.dispatchEvent(new Event('strategy-redraw')));
+  });
+}
+
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || !document.body.classList.contains('pish-projector')) return;
+  document.body.classList.remove('pish-projector');
+  const button = document.querySelector('[data-pish-projector]');
+  button?.setAttribute('aria-pressed', 'false');
+  button?.focus();
+});
+
+for (const select of document.querySelectorAll('[data-pish-horizon]')) {
+  select.addEventListener('change', () => {
+    const section = select.closest('section');
+    if (!section) return;
+    for (const value of section.querySelectorAll('[data-pish-year]')) value.hidden = value.dataset.pishYear !== select.value;
+    for (const label of section.querySelectorAll('[data-pish-selected-year]')) label.textContent = select.value;
+  });
+}
+
+function revealPishNode() {
+  if (!location.hash.startsWith('#pish-node-')) return;
+  const node = document.getElementById(location.hash.slice(1));
+  if (!node) return;
+  if (node.matches('details')) node.open = true;
+  node.closest('details')?.setAttribute('open', '');
+}
+window.addEventListener('hashchange', revealPishNode);
+// Also reveal a node when the user selects the same hash twice.
+document.addEventListener('click', event => {
+  const link = event.target.closest('a[href^="#pish-node-"]');
+  if (!link) return;
+  const node = document.getElementById(link.getAttribute('href').slice(1));
+  if (node?.matches('details')) node.open = true;
+});
+revealPishNode();
+
+let printDetails = null;
+window.addEventListener('beforeprint', () => {
+  if (!document.body.classList.contains('page-pish') || printDetails) return;
+  printDetails = [...document.querySelectorAll('main details')].map(node => [node, node.open]);
+  for (const [node] of printDetails) node.open = true;
+});
+window.addEventListener('afterprint', () => {
+  for (const [node, open] of printDetails ?? []) node.open = open;
+  printDetails = null;
+});
+for (const button of document.querySelectorAll('[data-pish-print]')) button.addEventListener('click', () => window.print());
 
 // ---------- сортировка таблиц ----------
 const collator = new Intl.Collator(lang, { numeric: true, sensitivity: 'base' });

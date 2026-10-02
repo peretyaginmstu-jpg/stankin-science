@@ -6,6 +6,7 @@ import { LANGS } from '../../content/i18n.mjs';
 const NAV = [
   ['home', ''],
   ['decisions', 'decisions/'],
+  ['pish', 'pish/'],
   ['competencies', 'competencies/'],
   ['trends', 'trends/'],
   ['collaboration', 'collaboration/'],
@@ -69,6 +70,7 @@ ${alternates}
 <link rel="preload" href="${esc(ctx.asset(`assets/fonts/golos-text-variable-${lang === 'ru' ? 'cyrillic' : 'latin'}.woff2`))}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/site.css'))}">
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/strategy.css'))}">
+${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/pish.css'))}">` : ''}
 <script type="module" src="${esc(versionedAsset('assets/js/site.mjs'))}"></script>
 </head>
 <body class="page-${esc(routeKey)}">

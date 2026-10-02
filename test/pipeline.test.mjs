@@ -53,6 +53,21 @@ test('выгрузка, сборка и проверка на имитации A
     assert.match(metrics.meta.assetVersion,/^[a-f0-9]{16}$/);
     assert.ok(html.includes(`assets/js/site.mjs?v=${metrics.meta.assetVersion}`));
     assert.ok(script.includes(`./charts/strategy.mjs?v=${metrics.meta.assetVersion}`));
+    assert.ok(script.includes(`./charts/pish.mjs?v=${metrics.meta.assetVersion}`));
+    const pish = JSON.parse(await readFile(path.join(out, 'data/pish.json'), 'utf8'));
+    assert.equal(pish.totalWorks, snap.stankin.works.length);
+    assert.ok(pish.rows.every(row => row.cohorts.p1 && row.cohorts.p2));
+    for (const [locale, route] of [['ru', 'pish/'], ['en', 'en/pish/']]) {
+      const page = await readFile(path.join(out, route, 'index.html'), 'utf8');
+      assert.match(page, /data-pish-projector/);
+      assert.match(page, /data-pish-print/);
+      assert.match(page, /data-pish-horizon/);
+      assert.ok(page.includes(`pish-loop-${locale}.svg`));
+      assert.ok(page.includes('noindex, nofollow'));
+      const diagram = await readFile(path.join(out, `data/pish-loop-${locale}.svg`), 'utf8');
+      assert.match(diagram, /<svg[^>]+xmlns="http:\/\/www.w3.org\/2000\/svg"/);
+      assert.ok(!diagram.includes('undefined'));
+    }
     const checked = await run('node', [path.join(ROOT, 'tools/check.mjs'), '--dir', out, '--publish'], { cwd: ROOT });
     assert.match(checked.stdout, /Проверка пройдена/);
   } finally {
