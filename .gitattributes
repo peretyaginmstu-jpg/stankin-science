@@ -1,0 +1,3 @@
+# Preserve supplied fonts, licences and university graphics byte-for-byte.
+src/assets/fonts/** -text -whitespace
+src/assets/img/** -text -whitespace
