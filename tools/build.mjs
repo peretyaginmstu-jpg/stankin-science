@@ -161,7 +161,12 @@ async function main() {
     await render('decisions', 'decisions/', t.nav.decisions, t.site.description, decisionsPage);
     await render('pish', 'pish/', t.nav.pish, lang === 'ru' ? 'Какую новую ПИШ предложить СТАНКИН: что показывают исследования, что требуется по конкурсу и какой продукт нужен заказчику.' : 'Choosing a new STANKIN engineering school: what research shows, what the competition requires and what product the customer needs.', pishPage);
     const diagramCtx = makeContext({ lang, model, competencies: COMPETENCIES, taxonomyRu: TAXONOMY, route: 'pish', pageDir: prefix + 'pish/', site: SITE, institution: INSTITUTION });
-    await write(`data/pish-loop-${lang}.svg`, pishLoop(pishLoopSpec(diagramCtx), 1160, { standalone: true }));
+    const diagramSpec = pishLoopSpec(diagramCtx);
+    const pagesOwner = new URL(SITE.repoUrl).pathname.split('/').filter(Boolean)[0];
+    const diagramPageUrl = `https://${pagesOwner}.github.io${base}${prefix}pish/`;
+    // A saved SVG must link back to the page, rather than an absent local fragment.
+    diagramSpec.nodes = diagramSpec.nodes.map(node => ({ ...node, href: `${diagramPageUrl}#pish-node-${node.id}` }));
+    await write(`data/pish-loop-${lang}.svg`, pishLoop(diagramSpec, 1160, { standalone: true }));
     await render('collaboration', 'collaboration/', t.collaboration.title, t.collaboration.lead, (ctx) => collaborationPage(ctx));
     await render('method', 'method/', t.method.title, t.method.lead, (ctx) => methodPage(ctx, { competencies: COMPETENCIES }));
   }
