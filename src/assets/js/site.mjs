@@ -1,6 +1,7 @@
 // Поведение страниц: меню, перерисовка графиков под ширину блока, подсказки, сортировка таблиц.
 // Без JavaScript сайт остаётся рабочим: графики нарисованы при сборке, данные есть в таблицах.
 
+import { initExplorer } from './explorer.mjs';
 import { RENDERERS } from './charts/charts.mjs';
 import { strategyMatrix, capabilityHeatmap } from './charts/strategy.mjs';
 import { pishLoop, cohortsChart, pishTopicLandscape } from './charts/pish.mjs';
@@ -381,4 +382,16 @@ for (const table of document.querySelectorAll('table.sortable')) {
       body.append(...rows);
     });
   });
+}
+
+// Load the local ECharts package only as the research explorer enters view.
+for (const root of document.querySelectorAll('[data-explorer]')) {
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      observer.disconnect();
+      initExplorer(root);
+    }, {rootMargin:'300px'});
+    observer.observe(root);
+  } else initExplorer(root);
 }

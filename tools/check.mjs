@@ -59,6 +59,17 @@ async function main() {
   const base = build.base ?? '/stankin-science/';
   const files = await walk(dir);
   const pish = JSON.parse(await readFile(path.join(dir, 'data/pish.json'), 'utf8'));
+  const explorer = JSON.parse(await readFile(path.join(dir, 'data/explorer.json'), 'utf8'));
+  if (explorer.schema !== 1 || explorer.totalWorks !== pish.totalWorks || explorer.fetchedAt !== pish.fetchedAt) fail('Интерактивная карта относится к другому снимку данных.');
+  if (!explorer.checks?.length) fail('Нет численного аудита интерактивной карты.');
+  else for (const check of explorer.checks) if (!check.passed) fail(`Не сошлась проверка интерактивной карты: ${check.id}`);
+  const vendorDir = path.join(dir,'assets/vendor/echarts');
+  const vendor = JSON.parse(await readFile(path.join(vendorDir,'metadata.json'),'utf8'));
+  if (vendor.name !== 'echarts' || vendor.license !== 'Apache-2.0' || !vendor.version || !vendor.files?.length) fail('Нет сведений о происхождении Apache ECharts.');
+  for (const item of vendor.files ?? []) {
+    const bytes = await readFile(path.join(vendorDir,item.name));
+    if (bytes.length !== item.bytes || createHash('sha256').update(bytes).digest('hex') !== item.sha256) fail(`Изменился файл Apache ECharts: ${item.name}`);
+  }
   if (build.pythonPlots) {
     const generatorSha = createHash('sha256').update(await readFile(new URL('./scientific-plots.py',import.meta.url))).digest('hex');
     for (const error of await verifyPlotIntegrity(dir,pish,generatorSha)) fail(error);

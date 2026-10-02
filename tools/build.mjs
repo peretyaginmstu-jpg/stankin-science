@@ -21,6 +21,7 @@ import { buildStrategy } from '../src/lib/strategy.mjs';
 import { buildIndustrialTopics } from '../content/topic-lenses.mjs';
 import { decisionsPage } from '../src/render/strategy.mjs';
 import { buildPishModel } from '../src/lib/pish.mjs';
+import { buildExplorer } from '../src/lib/explorer.mjs';
 import { pishPage, pishLoopSpec } from '../src/render/pish.mjs';
 import { pishAgendaSpecs } from '../src/render/pish-agenda.mjs';
 import { pishTopicTree, pishResearchPaths } from '../src/charts/pish-topics.mjs';
@@ -64,6 +65,7 @@ async function write(file, content) {
 
 const JS_MODULES = [
   ['src/assets/js/site.mjs','assets/js/site.mjs'],
+  ['src/assets/js/explorer.mjs','assets/js/explorer.mjs'],
   ['src/charts/charts.mjs','assets/js/charts/charts.mjs'],
   ['src/charts/strategy.mjs','assets/js/charts/strategy.mjs'],
   ['src/charts/pish.mjs','assets/js/charts/pish.mjs'],
@@ -73,7 +75,7 @@ const JS_MODULES = [
 ];
 
 async function assetVersion() {
-  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css','src/assets/css/pish.css'];
+  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css','src/assets/css/pish.css','src/assets/css/explorer.css','src/assets/vendor/echarts/metadata.json'];
   const contents = await Promise.all(files.map(file=>readFile(path.join(ROOT,file))));
   const hash = createHash('sha256');
   for (const content of contents) hash.update(content);
@@ -85,6 +87,7 @@ async function copyAssets(version) {
   await cp(path.join(a, 'css'), path.join(outDir, 'assets/css'), { recursive: true });
   await cp(path.join(a, 'fonts'), path.join(outDir, 'assets/fonts'), { recursive: true });
   await cp(path.join(a, 'img'), path.join(outDir, 'assets/img'), { recursive: true });
+  await cp(path.join(a, 'vendor'), path.join(outDir, 'assets/vendor'), { recursive: true });
   // Version the complete import graph, so a new HTML page cannot load an old module.
   for (const [source,target] of JS_MODULES) {
     const code = await readFile(path.join(ROOT,source),'utf8');
@@ -122,6 +125,7 @@ async function main() {
   model.strategy = buildStrategy(model);
   model.industrialTopics = buildIndustrialTopics(snapshot, model);
   model.pish = buildPishModel(snapshot, model);
+  model.explorer = buildExplorer(snapshot, model);
 
   // Дополнения для страниц: источники публикаций, английские названия классификации, состав компетенций.
   model.sources = snapshot.stankin.sources ?? {};
@@ -198,7 +202,8 @@ async function main() {
   }
 
   // Данные для загрузки
-  const { competencyTopics, ...exportable } = model;
+  const { competencyTopics, explorer, ...exportable } = model;
+  await write('data/explorer.json', `${JSON.stringify(explorer)}\n`);
   await write('data/metrics.json', `${JSON.stringify({ ...exportable, competencyTopics, competencyNames: Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.name])) }, null, 1)}\n`);
   await write('data/strategy.json', `${JSON.stringify({ ...model.strategy, industrialTopics: model.industrialTopics }, null, 2)}\n`);
   await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES, agenda:{umbrella:PISH_TOPIC_UMBRELLA,families:PISH_TOPIC_FAMILIES,caveat:PISH_TOPIC_METHOD_CAVEAT} }, null, 2)}\n`);

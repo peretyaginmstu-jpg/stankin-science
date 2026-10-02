@@ -71,6 +71,7 @@ ${alternates}
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/site.css'))}">
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/strategy.css'))}">
 ${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/pish.css'))}">` : ''}
+${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/explorer.css'))}">` : ''}
 <script type="module" src="${esc(versionedAsset('assets/js/site.mjs'))}"></script>
 </head>
 <body class="page-${esc(routeKey)}">

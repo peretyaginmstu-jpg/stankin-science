@@ -518,7 +518,7 @@ export function trendsPage(ctx) {
   ) : `<p class="muted">${esc(t.ui.noData)}</p>`;
 
   return [
-    hero(ctx, { eyebrow: t.site.university, title: t.trends.title, lead: t.trends.lead, extra: dataNote(ctx) }),
+    hero(ctx, { eyebrow: t.site.university, title: t.trends.title, lead: t.trends.lead, extra: `${dataNote(ctx)}<p class="data-note"><a href="${esc(ctx.page('pish/'))}#pish-explorer">${esc(ctx.lang==='ru'?'Открыть интерактивную карту тем и публикаций →':'Open the interactive topic and publication map →')}</a></p>` }),
     topicsSection(ctx),
     section('portfolio-section', t.trends.portfolioTitle, t.trends.portfolioLead, portfolio),
     section('fast', t.trends.fastTitle, t.trends.fastLead(ctx.int(thresholds.trendMinWorldWorks), ctx.change(thresholds.trendFastGrowth), period.p1, period.p2), fastTable),
