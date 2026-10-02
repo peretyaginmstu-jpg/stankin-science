@@ -87,3 +87,33 @@ test('buildModel: индекс специализации и доля в мир�
   // тема T2 не входит в компетенции — она вне трендов
   assert.ok(m.trends.fastGrowing.every((t) => t.id !== 'T2'));
 });
+
+test('ownRising: нулевая база не превращается в выдуманный рост и не обгоняет мир', () => {
+  const makeWorks = (tp, year, n) => Array.from({ length: n }, (_, i) => work({ id: `${tp}-${year}-${i}`, tp, y: year, fw: 1 }));
+  const snapshot = {
+    source: 'fixture', fetchedAt: '2026-10-02T00:00:00Z',
+    config: { period: { from: 2016, to: 2025, p1: [2016, 2020], p2: [2021, 2025] }, types: ['article'], institutionIds: ['I1'] },
+    institution: { id: 'I1', ror: 'fixture', candidates: [] },
+    taxonomy: {
+      topics: ['T-new', 'T-rising', 'T-flat'].map((id) => ({ id, name: 'Machining research', subfield: 2210, field: 22, domain: 3 })),
+    },
+    world: { byYear: { 2018: 300, 2023: 600 }, topics: { 'T-new': [100, 200], 'T-rising': [100, 200], 'T-flat': [100, 200] } },
+    stankin: {
+      works: [
+        ...makeWorks('T-new', 2023, 5), // 0 → 5: нет определённого отношения роста
+        ...makeWorks('T-rising', 2018, 2), ...makeWorks('T-rising', 2023, 6), // 2 → 6: рост 3, выше мирового 2
+        ...makeWorks('T-flat', 2018, 5), ...makeWorks('T-flat', 2023, 5), // 5 → 5: роста нет
+      ],
+      sources: {},
+    },
+    institutions: {}, competencies: {},
+  };
+  const competencies = [{ id: 'machining', match: { scope: { fields: [22] }, name: /machining/i } }];
+  const model = buildModel(snapshot, { competencies, thresholds: { competencyMinWorks: 15, trendMinWorldWorks: 100, trendFastGrowth: 1.5 } });
+  assert.deepEqual(model.trends.ownRising.map((t) => t.id), ['T-rising']);
+  assert.equal(model.trends.ownRising[0].growthOwn, 3);
+  assert.equal(model.trends.ownRising[0].growthWorld, 2);
+  assert.equal(model.topics.find((t) => t.id === 'T-new').nP1, 0);
+  assert.equal(model.topics.find((t) => t.id === 'T-new').nP2, 5);
+  assert.equal(model.totals.n, 23); // новая тема сохранена в корпусе и его показателях
+});

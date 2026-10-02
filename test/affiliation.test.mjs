@@ -28,7 +28,7 @@ test('public exclusion list contains only 188 unique work IDs and preserves noin
 
 test('affiliation audit normalises IDs, deduplicates and does not reject unusual topics', () => {
   const conflict = { id: 'https://openalex.org/W2771007730', primary_topic: { display_name: 'Chemistry' } };
-  const dental = { id: 'W4392049806', primary_topic: { display_name: 'Dental Materials' } };
+  const dental = { id: 'W9999999993', primary_topic: { display_name: 'Dental Materials' } };
   const military = { id: 'W9999999991', primary_topic: { display_name: 'Military Technology' } };
   const ambiguous = { id: 'W9999999992' };
   const result = auditUniversityWorks([conflict, dental, military, ambiguous, conflict]);

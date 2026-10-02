@@ -61,3 +61,25 @@ test('курсорная выдача собирает все страницы',
   assert.deepEqual(all.map((r) => r.id), [1, 2, 3]);
   assert.ok(calls[1].includes('cursor=c2'));
 });
+
+test('параллельные длинные списки тем соблюдают общий интервал API, включая повтор', async () => {
+  const starts = [];
+  let first = true;
+  const api = new OpenAlex({
+    concurrency: 4,
+    broadOrIntervalMs: 25,
+    fetchImpl: async () => {
+      starts.push(Date.now());
+      const status = first ? 429 : 200;
+      first = false;
+      return { ok: status === 200, status, headers: { get: () => null },
+        text: async () => 'Rate limit exceeded', json: async () => ({ results: [] }) };
+    },
+  });
+  api.backoff = async () => { api.stats.retries += 1; };
+  const filter = `primary_topic.id:${Array.from({ length: 11 }, (_, i) => `T${10001 + i}`).join('|')}`;
+  await Promise.all(Array.from({ length: 3 }, () => api.get('/works', { filter })));
+  assert.equal(starts.length, 4);
+  assert.equal(api.stats.retries, 1);
+  for (let i = 1; i < starts.length; i += 1) assert.ok(starts[i] - starts[i - 1] >= 20, 'wide requests started together');
+});

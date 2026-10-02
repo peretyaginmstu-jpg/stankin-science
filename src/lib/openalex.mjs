@@ -44,6 +44,7 @@ export class OpenAlex {
     maxRequests = 5000,
     retries = 6,
     timeoutMs = 90_000,
+    broadOrIntervalMs = 1100,
     userAgent = 'stankin-science (+https://github.com/peretyaginmstu-jpg/stankin-science)',
     log = () => {},
     fetchImpl = globalThis.fetch,
@@ -54,6 +55,9 @@ export class OpenAlex {
     this.maxRequests = maxRequests;
     this.retries = retries;
     this.timeoutMs = timeoutMs;
+    // Live API: >10 primary_topic.id OR values share a 1 request/s client limit.
+    this.broadOrIntervalMs = Math.max(0, broadOrIntervalMs);
+    this.broadOrNextAt = 0;
     this.userAgent = userAgent;
     this.log = log;
     this.fetch = fetchImpl;
@@ -95,6 +99,16 @@ export class OpenAlex {
     return decodeURIComponent(copy.toString());
   }
 
+  async paceBroadFilter(params) {
+    const broad = String(params.filter ?? '').split(',').some((filter) =>
+      filter.startsWith('primary_topic.id:') && filter.slice('primary_topic.id:'.length).split('|').length > 10);
+    if (!broad) return;
+    const now = Date.now();
+    const startAt = Math.max(now, this.broadOrNextAt);
+    this.broadOrNextAt = startAt + this.broadOrIntervalMs;
+    if (startAt > now) await sleep(startAt - now);
+  }
+
   async get(path, params = {}, { kind = 'list' } = {}) {
     if (this.stats.requests >= this.maxRequests) {
       throw new OpenAlexError(`Превышен лимит запросов (${this.maxRequests}) — проверьте настройки выгрузки`);
@@ -104,6 +118,7 @@ export class OpenAlex {
     await this.slot();
     try {
       for (let attempt = 0; ; attempt += 1) {
+        await this.paceBroadFilter(params);
         this.stats.requests += 1;
         let res;
         try {

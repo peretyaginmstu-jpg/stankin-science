@@ -310,8 +310,8 @@ export function buildModel(snapshot, { competencies, thresholds, home = 'RU' }) 
     whiteSpots: fast.filter((t) => t.n === 0).slice(0, 20),
     present: fast.filter((t) => t.n > 0).slice(0, 20),
     ownRising: topicRows
-      .filter((t) => t.nP2 >= 5 && t.worldP1 > 0)
-      .map((t) => ({ ...t, growthOwn: round(ratio(t.nP2, Math.max(t.nP1, 1))) }))
+      .filter((t) => t.nP1 > 0 && t.nP2 >= 5 && t.worldP1 > 0)
+      .map((t) => ({ ...t, growthOwn: round(ratio(t.nP2, t.nP1)) }))
       .filter((t) => t.growthOwn > (t.growthWorld ?? 0))
       .sort((a, b) => b.nP2 - a.nP2)
       .slice(0, 20),
