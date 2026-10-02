@@ -204,6 +204,28 @@ body.pish-projector .pish-section .chart{padding:24px}
 .pish-python-image img {display:block;width:100%;height:auto;}
 .pish-python-figure .pish-downloads {margin-top:.75rem;}
 .pish-projector .pish-python-image {border-width:2px;}
+.pish-python-figure[hidden],.pish-plot-controls[hidden] {display:none;}
+.pish-plot-controls {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin:22px 0;}
+.pish-plot-tabs {display:flex;flex-wrap:wrap;gap:8px;}
+.pish-plot-tabs button,.pish-plot-all,.pish-plot-dialog button,.pish-plot-dialog select {font:inherit;font-size:14px;cursor:pointer;border:1px solid var(--line);border-radius:5px;padding:10px 12px;color:var(--ink);background:var(--surface);}
+.pish-plot-tabs button {display:flex;align-items:center;gap:8px;min-height:44px;}
+.pish-plot-tabs button span {font-size:11px;opacity:.7;}
+.pish-plot-tabs button[aria-selected=true] {background:var(--header);color:var(--header-ink);border-color:var(--header);}
+.pish-plot-all[aria-pressed=true] {border-color:var(--link);color:var(--link);}
+.pish-plot-dialog {width:min(96vw,1600px);max-width:96vw;max-height:94vh;padding:20px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);}
+.pish-plot-dialog::backdrop {background:rgb(15 22 30 / .78);}
+.pish-plot-dialog header {display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.pish-plot-dialog header h3 {font-size:18px;line-height:1.35;max-width:70ch;}
+.pish-plot-dialog header>div {display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.pish-plot-dialog label,.pish-plot-dialog>p {font-size:12px;}
+.pish-plot-dialog>p {margin:12px 0;color:var(--muted);}
+.pish-zoom-frame {max-height:72vh;overflow:auto;background:#fff;border:1px solid var(--line);overscroll-behavior:contain;}
+.pish-zoom-frame img {display:block;width:100%;max-width:none;height:auto;}
+.pish-zoom-frame.zoom-2 img {width:200%;}
+.pish-zoom-frame.zoom-3 img {width:300%;}
+.pish-zoom-frame.zoom-4 img {width:400%;}
+@media(max-width:700px){.pish-plot-tabs{display:grid;grid-template-columns:1fr 1fr;width:100%}.pish-plot-dialog{padding:12px}.pish-plot-dialog header{align-items:flex-start;flex-direction:column;gap:10px}.pish-plot-dialog header h3{font-size:16px}.pish-plot-dialog header>div{flex-wrap:wrap}.pish-zoom-frame{max-height:62vh}.pish-plot-dialog label{display:none}}
+@media print {.pish-python-figure[hidden]{display:block!important}.pish-plot-controls,.pish-plot-dialog{display:none!important}}
 @media print {.pish-python-figure {break-before:page;break-inside:avoid;} .pish-python-figure .pish-downloads {display:none;}}
 
 .pish-agenda-index {display:flex;flex-wrap:wrap;gap:10px;margin:1.2rem 0 2rem;}

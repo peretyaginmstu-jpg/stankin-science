@@ -232,7 +232,7 @@ for (const button of document.querySelectorAll('[data-pish-projector]')) {
 }
 
 document.addEventListener('keydown', event => {
-  if (event.key !== 'Escape' || !document.body.classList.contains('pish-projector')) return;
+  if (event.key !== 'Escape' || document.querySelector('dialog[open]') || !document.body.classList.contains('pish-projector')) return;
   document.body.classList.remove('pish-projector');
   const button = document.querySelector('[data-pish-projector]');
   button?.setAttribute('aria-pressed', 'false');
@@ -278,6 +278,75 @@ window.addEventListener('afterprint', () => {
 for (const button of document.querySelectorAll('[data-pish-print]')) button.addEventListener('click', () => window.print());
 
 // ---------- сортировка таблиц ----------
+// Progressive enhancement: all scientific figures remain visible without JS and in print.
+const plotGallery = document.querySelector('.pish-python-plots');
+if (plotGallery) {
+  const figures = [...plotGallery.querySelectorAll('.pish-python-figure')];
+  const tabs = [...plotGallery.querySelectorAll('[data-pish-plot]')];
+  const all = plotGallery.querySelector('.pish-plot-all');
+  let selected = 'research-position';
+  let showAll = false;
+  const select = (id, updateUrl = false) => {
+    if (!tabs.some(t => t.dataset.pishPlot === id)) return;
+    selected = id;
+    tabs.forEach(tab => {
+      const active = tab.dataset.pishPlot === id;
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+    });
+    figures.forEach(figure => {
+      figure.hidden = !showAll && figure.id !== `pish-python-${id}`;
+      figure.setAttribute('role', showAll ? 'figure' : 'tabpanel');
+      figure.setAttribute('aria-labelledby', figure.id.replace('pish-python-', 'pish-tab-'));
+      figure.tabIndex = 0;
+    });
+    all.setAttribute('aria-pressed', String(showAll));
+    if (updateUrl) history.replaceState(null, '', `#pish-python-${id}`);
+  };
+  const selectHash = () => {
+    const id = location.hash.replace('#pish-python-', '');
+    if (tabs.some(t => t.dataset.pishPlot === id)) { showAll = false; select(id); }
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => { showAll = false; select(tab.dataset.pishPlot, true); });
+    tab.addEventListener('keydown', event => {
+      const next = {ArrowRight:(index+1)%tabs.length, ArrowLeft:(index+tabs.length-1)%tabs.length, Home:0, End:tabs.length-1}[event.key];
+      if (next == null) return;
+      event.preventDefault();
+      tabs[next].focus();
+      tabs[next].click();
+    });
+  });
+  all.addEventListener('click', () => { showAll = !showAll; select(selected); });
+  plotGallery.querySelector('.pish-plot-controls').hidden = false;
+  select(selected);
+  selectHash();
+  window.addEventListener('hashchange', selectHash);
+  // Printing always includes every plot; CSS also covers browsers without print events.
+  window.addEventListener('beforeprint', () => figures.forEach(f => { f.hidden = false; }));
+  window.addEventListener('afterprint', () => select(selected));
+
+  const dialog = plotGallery.querySelector('dialog');
+  const zoom = dialog.querySelector('select');
+  const frame = dialog.querySelector('.pish-zoom-frame');
+  const image = frame.querySelector('img');
+  const setZoom = () => { frame.classList.remove('zoom-2','zoom-3','zoom-4'); if (zoom.value !== '1') frame.classList.add(`zoom-${zoom.value}`); };
+  zoom.addEventListener('change', setZoom);
+  dialog.querySelector('[data-pish-zoom-close]').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  plotGallery.querySelectorAll('[data-pish-zoom]').forEach(link => link.addEventListener('click', event => {
+    if (!dialog.showModal || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    image.src = link.href;
+    image.alt = link.closest('figure').querySelector('h4').textContent;
+    dialog.querySelector('h3').textContent = image.alt;
+    zoom.value = window.innerWidth < 700 ? '4' : '1';
+    setZoom();
+    dialog.showModal();
+    frame.scrollTop = frame.scrollLeft = 0;
+  }));
+}
+
 const collator = new Intl.Collator(lang, { numeric: true, sensitivity: 'base' });
 for (const table of document.querySelectorAll('table.sortable')) {
   const heads = [...table.tHead.rows[0].cells];

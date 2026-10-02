@@ -110,7 +110,9 @@ jobs:
         run: python -m pip install -r tools/requirements-plots.txt
 
       - name: Научные графики Python · SVG / PDF / PNG
-        run: python tools/scientific-plots.py --data dist/data/pish.json --metrics dist/data/metrics.json --out dist/data/science-plots
+        run: |
+          python tools/test-scientific-plots.py
+          python tools/scientific-plots.py --data dist/data/pish.json --metrics dist/data/metrics.json --out dist/data/science-plots
 
       - name: Проверка сборки
         run: node tools/check.mjs --dir dist --publish

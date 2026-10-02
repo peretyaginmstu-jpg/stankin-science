@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 
-export const PLOT_KEYS = ['forest-all-fields', 'world-topics', 'research-bridges'];
+export const PLOT_KEYS = ['forest-all-fields', 'world-topics', 'research-position', 'research-bridges'];
 export const PLOT_FILES = PLOT_KEYS.flatMap(key => ['ru','en'].flatMap(lang => ['svg','pdf','png'].map(ext => `${key}-${lang}.${ext}`)));
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 

@@ -30,7 +30,7 @@ COLORS = {"blue": "#2472b2", "orange": "#c86b21", "gray": "#747979",
           "ink": "#232c35", "muted": "#53616c", "cream": "#f5f1e8",
           "grid": "#dfe3e4", "white": "#ffffff", "purple": "#71679a"}
 LANGS = ("ru", "en")
-PLOT_KEYS = ("forest-all-fields", "world-topics", "research-bridges")
+PLOT_KEYS = ("forest-all-fields", "world-topics", "research-position", "research-bridges")
 
 
 def say(lang, ru, en):
@@ -172,6 +172,8 @@ def validate(data, metrics):
         for key in ("n", "nP1", "nP2", "worldP1", "worldP2"):
             require_count(topic.get(key), f"{topic['id']}.{key}")
         require_number(topic.get("worldShareChange"), f"{topic['id']}.worldShareChange")
+        require_number(topic.get("ownWorldShareChange"), f"{topic['id']}.ownWorldShareChange")
+        position_coordinates(topic)  # independently check the plotted university-share ratio
     families = data.get("agenda", {}).get("families")
     if not isinstance(families, list):
         raise ValueError("agenda.families must be a list")
@@ -435,11 +437,11 @@ SHORT_NAMES = {
 SHORT_TOPICS = {
     "T10763": ("Цифровизация промышленности", "Industrial digitalization"),
     "T10462": ("Обучение роботов", "Robot reinforcement learning"),
-    "T11948": ("МО в материалах", "ML in materials"),
-    "T10705": ("Материалы для АП", "Additive materials"),
+    "T11948": ("ИИ в материаловедении", "ML in materials"),
+    "T10705": ("Аддитивные материалы", "Additive materials"),
     "T12111": ("Зрение / дефекты", "Vision / defects"),
     "T10220": ("Диагностика машин", "Machine fault diagnosis"),
-    "T10783": ("АП / 3D-печать", "Additive / 3D printing"),
+    "T10783": ("Аддитивные технологии", "Additive / 3D printing"),
     "T10653": ("Роботы / манипулирование", "Robot manipulation"),
     "T10188": ("Обработка / оптимизация", "Machining / optimization"),
     "T11138": ("Трибология / смазка", "Tribology / lubrication"),
@@ -557,6 +559,93 @@ def research_bridges(data, metrics, lang):
                  "encoding": "Semantic agenda links; recent competence metrics and selected-topic signals; categorical author-proposed roles, no measured edges or weights."}
 
 
+def position_coordinates(topic):
+    """A zero baseline has no ratio. A measured fall to zero is -100%, not missing."""
+    a, b, wa, wb = (topic.get(k) for k in ("nP1", "nP2", "worldP1", "worldP2"))
+    known = all(finite(v) for v in (a, b, wa, wb)) and a > 0 and wa > 0 and wb > 0
+    expected = b * wa / (a * wb) - 1 if known else None
+    exported = topic.get("ownWorldShareChange")
+    if expected is None:
+        if exported is not None:
+            raise ValueError(f"Undefined baseline has a reported ratio: {topic['id']}")
+    elif not finite(exported) or not math.isclose(expected, exported, abs_tol=0.00000051):
+        raise ValueError(f"Incorrect university-share ratio: {topic['id']}")
+    world = topic.get("worldShareChange")
+    return (world * 100, exported * 100) if finite(world) and finite(exported) else None
+
+
+def research_position(data, metrics, lang):
+    topics = sorted(data["topicEvidence"], key=lambda t: (
+        t.get("worldShareChange") is None, -(t.get("worldShareChange") or 0), t["id"]))
+    indexed = [(i + 1, t, position_coordinates(t)) for i, t in enumerate(topics)]
+    plotted = [(i, t, xy) for i, t, xy in indexed if xy is not None]
+    missing = [(i, t) for i, t, xy in indexed if xy is None]
+    fig = plt.figure(figsize=(16, 12))
+    base_title(fig, say(lang, "Растёт ли тема — и успевает ли СТАНКИН",
+                       "Is the topic growing — and is STANKIN keeping pace?"),
+               say(lang, "Две разные доли: тема во всей мировой науке и СТАНКИН внутри этой темы. 2021–2025 против 2016–2020.",
+                   "Two distinct shares: the topic in world research and STANKIN within that topic. 2021–2025 versus 2016–2020."))
+    ax = fig.add_axes([0.075, 0.325, 0.49, 0.51])
+    xs = [xy[0] for _, _, xy in plotted]
+    ys = [xy[1] for _, _, xy in plotted]
+    xmin, xmax = min([-35] + xs) - 8, max([40] + xs) + 20
+    ymin, ymax = min([-40] + ys) - 20, max([40] + ys) + 25
+    ax.set_xlim(xmin, xmax)
+    ax.set_ylim(ymin, ymax)
+    for x, y, w, h, color in [(0, 0, xmax, ymax, COLORS['blue']),
+                              (0, ymin, xmax, -ymin, COLORS['orange'])]:
+        ax.add_patch(Rectangle((x, y), w, h, facecolor=color, alpha=0.065, edgecolor='none'))
+    ax.axvline(0, color=COLORS['gray'], lw=1)
+    ax.axhline(0, color=COLORS['gray'], lw=1)
+    ax.grid(alpha=0.55)
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: number(v, lang, 0) + '%'))
+    ax.xaxis.set_major_locator(MaxNLocator(7))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: number(v, lang, 0) + '%'))
+    ax.set_xlabel(say(lang, "Изменение мировой доли темы →", "Change in the topic's world share →"), labelpad=12)
+    ax.set_ylabel(say(lang, "Изменение доли СТАНКИН внутри темы →", "Change in STANKIN's share within the topic →"), labelpad=10)
+    for i, topic, (x, y) in plotted:
+        small = min(topic['nP1'], topic['nP2']) < 20
+        tone = COLORS['blue'] if y >= 0 else COLORS['orange']
+        ax.scatter(x, y, s=380, facecolor='white' if small else tone,
+                   edgecolor=tone, linewidth=1.5, zorder=5)
+        ax.text(x, y, str(i), fontsize=10, weight='bold', ha='center', va='center',
+                color=tone if small else 'white', zorder=6)
+    ax.text(0.99, 0.98, say(lang, "Тема растёт · наша доля растёт", "Topic gains share · STANKIN gains share"),
+            transform=ax.transAxes, ha='right', va='top', color=COLORS['blue'], fontsize=10)
+    ax.text(0.99, 0.02, say(lang, "Тема растёт · наша доля падает", "Topic gains share · STANKIN loses share"),
+            transform=ax.transAxes, ha='right', va='bottom', color=COLORS['orange'], fontsize=10)
+    fig.text(0.075, 0.855, say(lang, "Координаты — доли публикаций, не качество и не рынок", "Coordinates show publication shares, not quality or market size"),
+             fontsize=11, weight='bold')
+    table = fig.add_axes([0.595, 0.325, 0.385, 0.51])
+    table.axis('off')
+    table.text(0, 1.035, say(lang, "Тема / работы СТАНКИН", "Topic / STANKIN works"), weight='bold', fontsize=11)
+    table.text(0.82, 1.035, say(lang, "Δ мир", "Δ world"), ha='right', fontsize=10)
+    table.text(1, 1.035, say(lang, "Δ наша доля", "Δ our share"), ha='right', fontsize=10)
+    for row, (i, topic, xy) in enumerate(indexed):
+        y = 1 - (row + 0.5) / max(1, len(indexed))
+        name = say(lang, *SHORT_TOPICS[topic['id']]) if topic['id'] in SHORT_TOPICS else label(topic.get('name'), lang)
+        table.text(0, y, f"{i:02d}", va='center', weight='bold', color=COLORS['muted'], fontsize=10)
+        table.text(0.07, y, wrap(name, 31) + '\n' + f"{integer(topic.get('nP1'), lang)} → {integer(topic.get('nP2'), lang)}",
+                   fontsize=10, va='center', linespacing=1.25, url=f"https://openalex.org/{topic['id']}")
+        table.text(0.82, y, percentage(topic.get('worldShareChange'), lang, signed=True), ha='right', va='center', fontsize=10)
+        table.text(1, y, percentage(topic.get('ownWorldShareChange'), lang, signed=True), ha='right', va='center', fontsize=10)
+    fig.text(0.075, 0.248, say(lang, "○ Полый круг: хотя бы в одном пятилетии менее 20 работ. Номер соответствует теме справа.",
+                              "○ Hollow circle: fewer than 20 works in at least one period. Numbers match the topic list."), fontsize=10)
+    absent = '; '.join(f"{i:02d} · {say(lang, *SHORT_TOPICS[t['id']]) if t['id'] in SHORT_TOPICS else label(t.get('name'), lang)}"
+                       for i, t in missing)
+    if len(missing) > 4:
+        absent = say(lang, f"{len(missing)} тем с неопределённой динамикой — см. таблицу справа",
+                     f"{len(missing)} topics with undefined change — see the table at right")
+    fig.text(0.075, 0.218, wrap(say(lang, "Вне координат: ", "Not plotted: ") + (absent or say(lang, "нет", "none")), 145), fontsize=10, color=COLORS['muted'], va='top')
+    fig.text(0.075, 0.163, say(lang, "Если исходных работ нет, рост нашей доли не определён. Это повод проверить статьи и исполнителей, а не доказательство отсутствия компетенции.",
+                              "With no baseline works, our share growth is undefined. Review papers and people; this is not proof that a capability is absent."), fontsize=10, color=COLORS['muted'])
+    footer(fig, data, metrics, lang, say(lang,
+        "X = 100 × [(w₂/W₂)/(w₁/W₁) − 1]; Y = 100 × [(n₂/w₂)/(n₁/w₁) − 1]. W — все мировые работы, w — мировая тема, n — СТАНКИН.\nЛевая половина: тема теряет долю в мировой науке; выше нуля СТАНКИН увеличивает свою долю внутри неё, ниже — теряет.\n13 выбранных кластеров не представляют весь мировой фронтир. На малых числах положение неустойчиво; статистическая значимость не заявлена.\nВыбор проекта требует научного вопроса, эксперимента, команды и заказчика. Число работ и FWCI не определяют бюджет автоматически.",
+        "X = 100 × [(w₂/W₂)/(w₁/W₁) − 1]; Y = 100 × [(n₂/w₂)/(n₁/w₁) − 1]. W: all world works; w: world topic works; n: STANKIN works.\nLeft half: the topic loses world share. Above zero STANKIN gains share within that topic; below zero it loses share.\n13 selected clusters do not cover the entire frontier. Positions based on few works are unstable; statistical significance is not claimed.\nA project needs a research question, experiment, team and customer. Counts and FWCI do not automatically determine a budget."))
+    return fig, {"topics": len(topics), "plotted": len(plotted), "undefined": [t['id'] for _, t in missing],
+                 "encoding": "Two distinct publication-share changes; fixed-size numbered circles, hollow for either cohort below 20; undefined baselines are not plotted."}
+
+
 def package_version(name):
     try:
         return importlib.metadata.version(name)
@@ -601,7 +690,7 @@ def main():
             "Research-bridge links are proposed semantic relationships, not measured co-authorship or technology-transfer flows.",
         ],
     }
-    generators = dict(zip(PLOT_KEYS, (forest_all_fields, world_topics, research_bridges)))
+    generators = dict(zip(PLOT_KEYS, (forest_all_fields, world_topics, research_position, research_bridges)))
     for key, generator in generators.items():
         for lang in LANGS:
             fig, details = generator(data, metrics, lang)
@@ -625,7 +714,7 @@ def main():
             manifest["plots"].append({"key": key, "lang": lang, "files": entries, **details})
     manifest_file = args.out / "manifest.json"
     manifest_file.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Scientific figures: {len(manifest['plots'])} bilingual plots, 18 files · {data['totalWorks']} source works")
+    print(f"Scientific figures: {len(manifest['plots'])} bilingual plots, {len(manifest['files'])} files · {data['totalWorks']} source works")
     print(f"Manifest: {manifest_file}")
 
 
