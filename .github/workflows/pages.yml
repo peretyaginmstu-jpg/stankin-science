@@ -75,13 +75,16 @@ jobs:
 
       - name: Снимок данных этого месяца
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: data/snapshot/snapshot.json
-          key: openalex-${{ steps.month.outputs.value }}-${{ hashFiles('config/site.mjs', 'content/competencies.mjs', 'tools/fetch-openalex.mjs', 'src/lib/openalex.mjs') }}
+          key: openalex-${{ steps.month.outputs.value }}-${{ hashFiles('config/site.mjs', 'content/competencies.mjs', 'tools/fetch-openalex.mjs', 'src/lib/openalex.mjs') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            openalex-${{ steps.month.outputs.value }}-${{ hashFiles('config/site.mjs', 'content/competencies.mjs', 'tools/fetch-openalex.mjs', 'src/lib/openalex.mjs') }}-
 
       - name: Выгрузка OpenAlex
-        if: steps.cache.outputs.cache-hit != 'true' || inputs.refresh
+        id: fetch
+        if: steps.cache.outputs.cache-matched-key == '' || inputs.refresh || github.event_name == 'schedule'
         env:
           OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
         run: node tools/fetch-openalex.mjs --no-key
@@ -98,6 +101,15 @@ jobs:
 
       - name: Проверка сборки
         run: node tools/check.mjs --dir dist --publish
+
+      # Cache entries are immutable. A refreshed snapshot gets a new key; later builds
+      # restore the latest entry for the same month and analysis configuration.
+      - name: Сохранение обновлённого снимка
+        if: steps.fetch.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: data/snapshot/snapshot.json
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Снимок данных — в артефакты запуска
         uses: actions/upload-artifact@v4
