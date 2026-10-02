@@ -62,11 +62,15 @@ const REAL_CASES = [
   ['T12408', 'Educational Innovations and Challenges', 1710, 17, 'engineering-education'],
   ['T13978', 'Foreign Language Teaching Methods', 3304, 33, 'engineering-education'],
   ['T14470', 'Advanced Data Processing Techniques', 2207, 22, 'ai-data'],
+  ['T11659', 'Advanced Image Fusion Techniques', 2214, 22, 'ai-data'],
+  ['T14420', 'Advanced Research in Systems and Signal Processing', 2207, 22, 'ai-data'],
   ['T13267', 'Advanced Theoretical and Applied Studies in Material Sciences and Geometry', 2204, 22, 'modeling-mechanics'],
   ['T12176', 'Optimization and Packing Problems', 2209, 22, 'modeling-mechanics'],
   ['T10461', 'Gas Sensing Nanomaterials and Sensors', 2208, 22, 'metrology-quality'],
   ['T11897', 'Digital Holography and Microscopy', 3107, 31, 'metrology-quality'],
-  ['T13129', 'Material Properties and Applications', 2500, 25, null],
+  ['T13129', 'Material Properties and Applications', 2500, 25, 'general-materials'],
+  ['T13093', 'Electric Power Systems and Control', 2208, 22, null],
+  ['T13190', 'Engineering and Environmental Studies', 2212, 22, null],
   ['T14423', 'Military Technology and Strategies', 2202, 22, null],
 ];
 
@@ -84,6 +88,22 @@ test('общая инженерная группа использует точн
   assert.equal(topicMatches(rule, { name: 'Military Technology and Strategies', subfield: 2202, field: 22 }), false);
   assert.equal(topicMatches(rule, { name: 'Other Engineering Technology and Methodologies', subfield: 2209, field: 22 }), false);
   assert.equal(topicMatches(rule, { name: 'Engineering Technology and Methodologies', subfield: 1710, field: 17 }), false);
+});
+
+test('общее материаловедение сохраняет смешанную тему, но не забирает все материалы и приложения', () => {
+  const rule = COMPETENCIES.find((c) => c.id === 'general-materials').match;
+  assert.equal(topicMatches(rule, { name: 'Material Properties and Applications', subfield: 2500, field: 25 }), true);
+  assert.equal(topicMatches(rule, { name: 'Material Properties and Applications in Medicine', subfield: 2500, field: 25 }), false);
+  assert.equal(topicMatches(rule, { name: 'Material Properties and Applications', subfield: 2204, field: 22 }), false);
+  assert.equal(topicMatches(rule, { name: 'Titanium Alloys Microstructure and Properties', subfield: 2506, field: 25 }), false);
+});
+
+test('обработка изображений и сигналов остаётся в инженерном/вычислительном scope', () => {
+  const rule = COMPETENCIES.find((c) => c.id === 'ai-data').match;
+  assert.equal(topicMatches(rule, { name: 'Advanced Image Fusion Techniques', subfield: 2214, field: 22 }), true);
+  assert.equal(topicMatches(rule, { name: 'Advanced Research in Systems and Signal Processing', subfield: 2207, field: 22 }), true);
+  assert.equal(topicMatches(rule, { name: 'Clinical Image Fusion Techniques', subfield: 1702, field: 17 }), false);
+  assert.equal(topicMatches(rule, { name: 'Advanced Image Fusion Techniques', subfield: 3107, field: 31 }), false);
 });
 
 test('сенсорные и голографические темы не включают произвольную микроскопию или клинические темы', () => {

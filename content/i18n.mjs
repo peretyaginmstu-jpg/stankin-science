@@ -265,6 +265,7 @@ export const STRINGS = {
       limits: [
         'OpenAlex полнее всего покрывает публикации с DOI; часть работ в российских журналах без DOI может отсутствовать, а аффилиации иногда распознаются с ошибками.',
         'Темы присваиваются автоматически и могут не совпадать с тем, как направление понимают сами исследователи.',
+        'Подсчитываются записи OpenAlex, а не отдельные научные результаты. Одинаковые OpenAlex ID удаляются; возможные дубли с разными ID или DOI и точность типов документов требуют отдельной проверки. Например, в общем материаловедческом кластере встречаются предисловия, которые провайдер относит к учитываемым типам.',
         'Цитирования недавних работ ещё накапливаются: показатели последних лет менее устойчивы.',
         'FWCI OpenAlex использует цитирования в год публикации и три следующих года. Для работ 2023–2025 годов это окно ещё не завершено; среднее по десятилетию является описательным срезом, а не сравнением завершённых когорт.',
         'Показатели по небольшим направлениям (до нескольких десятков работ) сильно зависят от отдельных публикаций.',
@@ -541,6 +542,7 @@ export const STRINGS = {
       limits: [
         'OpenAlex covers publications with a DOI best; some papers in Russian journals without a DOI may be missing, and affiliations are sometimes recognised incorrectly.',
         'Topics are assigned automatically and may differ from how researchers themselves see the area.',
+        'Counts refer to OpenAlex records, not distinct research results. Repeated OpenAlex IDs are removed; possible duplicates with different IDs or DOIs and document-type accuracy need separate verification. For example, the general materials cluster includes prefaces assigned by the provider to the included types.',
         'Citations of recent papers are still accumulating, so indicators for the latest years are less stable.',
         'OpenAlex FWCI uses citations in the publication year and the next three years. This window is still incomplete for 2023–2025 papers; the decade-wide mean is a descriptive snapshot, not a comparison of completed citation cohorts.',
         'Indicators for small areas (up to a few dozen papers) depend heavily on individual publications.',

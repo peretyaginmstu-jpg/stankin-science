@@ -160,6 +160,19 @@ export const COMPETENCIES = [
     },
   },
   {
+    id: 'general-materials',
+    name: { ru: 'Общее материаловедение: свойства и применение', en: 'General materials science: properties and applications' },
+    short: { ru: 'Общее материаловедение', en: 'General materials science' },
+    summary: {
+      ru: 'Широкий смешанный алгоритмический кластер Material Properties and Applications: свойства и применение сплавов, керамики, композитов и полимеров, покрытия, обработка поверхности и связанные инженерные методы. Это общая группа публикаций, а не отдельная технология; её показатели требуют разбора работ по материалам и конкретным задачам.',
+      en: 'The broad, mixed algorithmic cluster Material Properties and Applications: properties and applications of alloys, ceramics, composites and polymers, coatings, surface processing and related engineering methods. This is a general publication group, not a single technology; its indicators require examination of papers by material and specific research problem.',
+    },
+    match: {
+      scope: { subfields: [2500] },
+      name: /^Material Properties and Applications$/i,
+    },
+  },
+  {
     id: 'metrology-quality',
     name: { ru: 'Метрология, измерения и качество', en: 'Metrology, measurement and quality' },
     short: { ru: 'Метрология и качество', en: 'Metrology & quality' },
@@ -178,13 +191,13 @@ export const COMPETENCIES = [
     name: { ru: 'Искусственный интеллект и анализ данных', en: 'Artificial intelligence and data analytics' },
     short: { ru: 'ИИ и анализ данных', en: 'AI & data' },
     summary: {
-      ru: 'Машинное обучение и нейросетевые модели, компьютерное зрение и распознавание образов, интеллектуальный анализ данных — в том числе для задач промышленности.',
-      en: 'Machine learning and neural network models, computer vision and pattern recognition, data mining — including industrial applications.',
+      ru: 'Машинное обучение и нейросетевые модели, компьютерное зрение, распознавание и объединение изображений, а также общие методы обработки данных и сигналов — в том числе для задач промышленности. Группа шире машинного обучения: принадлежность к ней не означает, что в каждой работе применены нейросети или ИИ.',
+      en: 'Machine learning and neural network models, computer vision, image recognition and fusion, and general data and signal processing methods — including industrial applications. The group extends beyond machine learning: membership does not imply that every paper uses neural networks or AI.',
     },
     match: {
       whole: { subfields: [1702, 1707] },
       scope: { fields: [17, 22] },
-      name: /machine learning|deep learning|neural network|data mining|data processing|big data|computer vision|image (recognition|processing|segmentation|classification)|pattern recognition|reinforcement learning|explainable|natural language|language model|fuzzy (logic|system)|genetic algorithm|evolutionary (algorithm|computation)|swarm intelligence|metaheuristic/i,
+      name: /machine learning|deep learning|neural network|data mining|data processing|big data|computer vision|image (recognition|processing|segmentation|classification|fusion)|pattern recognition|reinforcement learning|explainable|natural language|language model|fuzzy (logic|system)|genetic algorithm|evolutionary (algorithm|computation)|swarm intelligence|metaheuristic|^Advanced Research in Systems and Signal Processing$/i,
       exclude: /medical image|brain|eeg|ecg|cancer|disease|clinical|protein|genom/i,
     },
   },
