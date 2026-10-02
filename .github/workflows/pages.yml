@@ -97,7 +97,20 @@ jobs:
       - name: Сборка сайта
         env:
           SITE_BASE: ${{ steps.pages.outputs.base_path && format('{0}/', steps.pages.outputs.base_path) || '/stankin-science/' }}
+          PYTHON_PLOTS: '1'
         run: node tools/build.mjs
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tools/requirements-plots.txt
+
+      - name: Библиотеки научной визуализации
+        run: python -m pip install -r tools/requirements-plots.txt
+
+      - name: Научные графики Python · SVG / PDF / PNG
+        run: python tools/scientific-plots.py --data dist/data/pish.json --metrics dist/data/metrics.json --out dist/data/science-plots
 
       - name: Проверка сборки
         run: node tools/check.mjs --dir dist --publish

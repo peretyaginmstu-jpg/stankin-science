@@ -3,9 +3,10 @@
 
 import { RENDERERS } from './charts/charts.mjs';
 import { strategyMatrix, capabilityHeatmap } from './charts/strategy.mjs';
-import { pishLoop, cohortsChart } from './charts/pish.mjs';
+import { pishLoop, cohortsChart, pishTopicLandscape } from './charts/pish.mjs';
+import { pishTopicTree, pishResearchPaths } from './charts/pish-topics.mjs';
 
-const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap, 'pish-loop': pishLoop, 'pish-cohorts': cohortsChart };
+const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap, 'pish-loop': pishLoop, 'pish-cohorts': cohortsChart, 'pish-landscape':pishTopicLandscape, 'pish-topic-tree':pishTopicTree, 'pish-research-paths':pishResearchPaths };
 
 const lang = document.documentElement.lang || 'ru';
 

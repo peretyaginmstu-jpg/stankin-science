@@ -1,0 +1,3 @@
+# Public PyPI releases; isolated Python environment, no change to Node dependencies.
+matplotlib==3.11.2
+SciencePlots==2.2.2

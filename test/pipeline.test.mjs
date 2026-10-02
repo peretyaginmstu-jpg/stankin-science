@@ -67,6 +67,14 @@ test('выгрузка, сборка и проверка на имитации A
       const diagram = await readFile(path.join(out, `data/pish-loop-${locale}.svg`), 'utf8');
       assert.match(diagram, /<svg[^>]+xmlns="http:\/\/www.w3.org\/2000\/svg"/);
       assert.ok(!diagram.includes('undefined'));
+      for (const name of ['landscape','tree','paths']) {
+        assert.ok(page.includes(`pish-${name}-${locale}.svg`));
+        const agendaDiagram = await readFile(path.join(out,`data/pish-${name}-${locale}.svg`),'utf8');
+        assert.match(agendaDiagram,/<svg[^>]+xmlns="http:\/\/www.w3.org\/2000\/svg"/);
+        assert.ok(!agendaDiagram.includes('undefined')&&!agendaDiagram.includes('NaN'));
+      }
+      assert.ok(page.includes('pish-node-topic-physics-with-learned-correction'));
+      for(const type of ['pish-landscape','pish-topic-tree','pish-research-paths']) assert.ok(page.includes(`data-chart="${type}"`),'new charts register their responsive renderer');
     }
     const checked = await run('node', [path.join(ROOT, 'tools/check.mjs'), '--dir', out, '--publish'], { cwd: ROOT });
     assert.match(checked.stdout, /Проверка пройдена/);

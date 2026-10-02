@@ -92,3 +92,105 @@ export function cohortsChart(spec = {}, width = 1160) {
   });
   return (out.join('')+'</svg>').replaceAll('2016–2020',p1Label).replaceAll('2021–2025',p2Label);
 }
+
+// Two distinct views: broad competency groups and selected OpenAlex topics.
+// A topic is not silently treated as a subdivision of the plotted groups.
+export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false } = {}) {
+  const { rows = [], topics = [], lang = 'ru' } = spec;
+  const en=lang==='en',w=Math.max(360,Number.isFinite(width)?Math.round(width):1160),narrow=w<800;
+  const delta=v=>finite(v)?`${v>0?'+':''}${new Intl.NumberFormat(en?'en-GB':'ru-RU',{style:'percent',maximumFractionDigits:1}).format(v)}`:'—';
+  const state=r=>['strong','base'].includes(r.status)?'base':['strengthen','build','gap'].includes(r.status)?'build':['review','watch'].includes(r.status)?'review':'unknown';
+  const stateText=r=>({base:en?'Our research base':'Своя научная опора',build:en?'Needs strengthening':'Нужно усилить',review:en?'Inspect a narrower topic':'Проверить узкую тему',unknown:en?'Check the evidence':'Проверить данные'})[state(r)];
+  const stateColour=r=>({base:'#2b7e75',build:'#2f6db5',review:'#b4432d',unknown:'#8b877d'})[state(r)];
+  const label=r=>r.label??r.id??'';
+  const openLink=r=>`<g class="pish-row-link">${r.href?`<a href="${esc(r.href)}" aria-label="${esc(label(r))}">`:''}`;
+  const closeLink=r=>`${r.href?'</a>':''}</g>`;
+  const firstTop=114,firstHeight=narrow?rows.length*172+18:Math.max(500,rows.length*57+65);
+  const secondTop=firstTop+firstHeight+49,topicH=narrow?124:65;
+  const h=secondTop+topics.length*topicH+(narrow?170:114);
+  const out=[`<svg xmlns="http://www.w3.org/2000/svg" class="chart-svg pish-diagram pish-topic-landscape" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(en?'Research fields and selected emerging topics':'Научные направления и растущие темы')}"><title>${esc(en?'Choose a field, then inspect the specific research topics':'Выбрать направление и проверить конкретные научные темы')}</title><desc>${esc(en?'The first view compares broad groups using change in world publication share, recent STANKIN FWCI and recent publication count. The second view shows selected OpenAlex topics on a separate taxonomy. World share is relative to all world publications. This is not a global ranking, market estimate or assessment of technology readiness. Missing values are distinguished from zero; action labels are supplied by the page model rather than inferred from coordinates.':'Сначала сравниваются широкие группы: изменение мировой публикационной доли, FWCI новых работ СТАНКИН и число новых работ. Затем отдельно показаны выбранные темы OpenAlex с другой детализацией классификации. Мировая доля считается относительно всех мировых работ. Это не мировой рейтинг, оценка рынка или готовности технологии. Пропуски отличаются от нуля; подписи действий передаёт модель страницы, а не координаты на графике.')}</desc>${standalone?STYLE:''}`];
+  out.push(tx(18,26,en?'1 · BROAD RESEARCH FIELDS':'1 · ШИРОКИЕ НАУЧНЫЕ НАПРАВЛЕНИЯ','font-size="12" font-weight="600" letter-spacing=".8"'));
+  out.push(multiline(18,53,en?'World topic-share change × recent STANKIN citation impact':'Изменение мировой доли направления × цитирование новых работ СТАНКИН',narrow?39:110,20,'font-size="16" font-weight="600"'));
+  out.push(multiline(18,narrow?96:84,en?'Area = recent work count · whiskers = descriptive 95% intervals':'Площадь = число новых работ · усы = описательные 95% интервалы',narrow?47:140,14,'font-size="10.5" class="pish-muted"'));
+  if(narrow) {
+    rows.forEach((r,i)=>{
+      const y=firstTop+i*172;
+      out.push(openLink(r));
+      out.push(`<rect x="18" y="${y}" width="${w-36}" height="159" rx="5" class="pish-node-box"/><rect x="18" y="${y}" width="4" height="159" rx="2" fill="${stateColour(r)}"/>`);
+      const nameLines=lines(label(r),32);const bodyY=y+27+nameLines.length*18;
+      out.push(multiline(31,y+24,label(r),32,18,'font-size="14" font-weight="600"'));
+      out.push(tx(31,bodyY,`${en?'World-share change':'Изменение мировой доли'} ${delta(r.worldShareChange)} · FWCI ${fmt(lang,r.fwciP2,3)}`,'font-size="12"'));
+      out.push(tx(31,bodyY+22,`${en?'STANKIN works':'Работы СТАНКИН'} ${fmt(lang,r.nP1,0)} → ${fmt(lang,r.nP2,0)}`,'font-size="11.5" class="pish-muted"'));
+      if(finite(r.fwciLow)&&finite(r.fwciHigh))out.push(tx(31,bodyY+41,`95%: ${fmt(lang,r.fwciLow,3)} … ${fmt(lang,r.fwciHigh,3)}`,'font-size="10.5" class="pish-muted"'));
+      out.push(tx(31,y+145,stateText(r),'font-size="11" font-weight="600"'),closeLink(r));
+    });
+  } else {
+    const keyW=350,left=62,right=keyW+33,plotW=w-left-right,plotH=firstHeight-105,top=firstTop+18;
+    const valid=rows.map((r,i)=>({...r,index:i})).filter(r=>finite(r.worldShareChange)&&finite(r.fwciP2)&&r.fwciP2>=0);
+    const xs=valid.map(r=>r.worldShareChange),ys=valid.flatMap(r=>[r.fwciP2,finite(r.fwciHigh)?r.fwciHigh:r.fwciP2]);const rawLo=Math.min(0,...xs),rawHi=Math.max(0,...xs),span=Math.max(.4,rawHi-rawLo);
+    const step=span<=.6?.1:span<=1.5?.25:span<=3?.5:1;
+    const lo=Math.floor((rawLo-span*.15)/step)*step,hi=Math.ceil((rawHi+span*.15)/step)*step;
+    const yHi=Math.max(2,Math.ceil(Math.max(1,...ys)*2)/2+.5),X=v=>left+(v-lo)/(hi-lo)*plotW,Y=v=>top+plotH-v/yHi*plotH;
+    const maxN=Math.max(1,...valid.map(r=>finite(r.nP2)&&r.nP2>0?r.nP2:0));
+    out.push(`<rect x="${left}" y="${top}" width="${plotW}" height="${plotH}" fill="#fbf9f4"/><rect x="${X(0)}" y="${top}" width="${left+plotW-X(0)}" height="${plotH}" fill="#e8eef6" opacity=".6"/>`);
+    for(let x=lo;x<=hi+step/2;x+=step)out.push(`<line x1="${X(x)}" x2="${X(x)}" y1="${top}" y2="${top+plotH}" class="pish-grid"/>`,tx(X(x),top+plotH+22,delta(Math.abs(x)<1e-8?0:x),'font-size="10.5" class="pish-muted" text-anchor="middle"'));
+    for(let y=0;y<=yHi+.01;y+=.5)out.push(`<line x1="${left}" x2="${left+plotW}" y1="${Y(y)}" y2="${Y(y)}" class="pish-grid"/>`,tx(left-10,Y(y)+4,fmt(lang,y,1),'font-size="10.5" class="pish-muted" text-anchor="end"'));
+    out.push(`<line x1="${X(0)}" x2="${X(0)}" y1="${top}" y2="${top+plotH}" class="pish-reference"/><line x1="${left}" x2="${left+plotW}" y1="${Y(1)}" y2="${Y(1)}" class="pish-reference"/>`);
+    out.push(tx(left,top-12,en?'Recent STANKIN FWCI':'FWCI новых работ СТАНКИН','font-size="11" font-weight="600"'));
+    out.push(tx(left+plotW/2,top+plotH+48,en?'Change in world publication share':'Изменение доли направления в мировой науке','font-size="11" class="pish-muted" text-anchor="middle"'));
+    const chips=[];
+    [...valid].sort((a,b)=>(b.nP2??0)-(a.nP2??0)).forEach(r=>{
+      const cx=X(r.worldShareChange),cy=Y(r.fwciP2),radius=finite(r.nP2)&&r.nP2>0?Math.sqrt(r.nP2/maxN)*27:0;
+      const title=`${label(r)}. ${en?'World-share change':'Изменение мировой доли'} ${delta(r.worldShareChange)}; FWCI ${fmt(lang,r.fwciP2,3)}; n=${fmt(lang,r.nP2,0)}. ${stateText(r)}.`;
+      out.push(`<g><title>${esc(title)}</title>`);
+      if(finite(r.fwciLow)&&finite(r.fwciHigh)&&r.fwciLow>=0&&r.fwciHigh>=r.fwciLow)out.push(`<path d="M${cx},${Y(r.fwciLow)}V${Y(r.fwciHigh)}M${cx-5},${Y(r.fwciLow)}H${cx+5}M${cx-5},${Y(r.fwciHigh)}H${cx+5}" stroke="${stateColour(r)}" stroke-width="1.5" fill="none"/>`);
+      if(radius>0)out.push(`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${stateColour(r)}" fill-opacity=".77" stroke="#fbf9f4" stroke-width="1.5"/>`);
+      else out.push(`<path d="M${cx-4},${cy}H${cx+4}M${cx},${cy-4}V${cy+4}" stroke="${stateColour(r)}" stroke-width="1.5"/>`);
+      const candidates=[[cx+radius+12,cy-12],[cx-radius-12,cy-12],[cx+radius+12,cy+16],[cx-radius-12,cy+16],[cx,cy-radius-16],[cx,cy+radius+17],[cx+radius+29,cy],[cx-radius-29,cy]];
+      const choice=candidates.find(([x,y])=>x>left+10&&x<left+plotW-10&&y>top+10&&y<top+plotH-10&&!chips.some(p=>Math.abs(p.x-x)<28&&Math.abs(p.y-y)<23))??[Math.min(left+plotW-13,Math.max(left+13,cx)),Math.min(top+plotH-12,Math.max(top+12,cy-radius-13))];
+      chips.push({x:choice[0],y:choice[1]});
+      out.push(`<line x1="${cx}" x2="${choice[0]}" y1="${cy}" y2="${choice[1]}" stroke="#8b877d" stroke-width=".8"/><rect x="${choice[0]-11}" y="${choice[1]-10}" width="22" height="20" rx="4" fill="#fbf9f4" stroke="${stateColour(r)}"/>`,tx(choice[0],choice[1]+4,String(r.index+1).padStart(2,'0'),'font-size="10" font-weight="600" text-anchor="middle"'),'</g>');
+    });
+    const keyX=w-keyW+1;
+    rows.forEach((r,i)=>{
+      const y=firstTop+i*57+6;
+      out.push(openLink(r));
+      out.push(`<g><title>${esc(label(r))}</title>`,tx(keyX,y+10,String(i+1).padStart(2,'0'),'font-size="10.5" font-weight="600" class="pish-muted"'));
+      out.push(multiline(keyX+32,y+10,label(r),37,15,'font-size="12" font-weight="600"'));
+      out.push(tx(keyX+32,y+39,`FWCI ${fmt(lang,r.fwciP2,3)} · n=${fmt(lang,r.nP2,0)} · ${delta(r.worldShareChange)}`,'font-size="10.5" class="pish-muted"'));
+      out.push(tx(keyX+32,y+53,stateText(r),'font-size="10"'));
+      out.push('</g>',closeLink(r));
+    });
+    const missing=rows.filter(r=>!finite(r.worldShareChange)||!finite(r.fwciP2)||r.fwciP2<0).length;
+    if(missing)out.push(tx(left,top+plotH+68,`${en?'Not plotted: missing coordinates':'Не построено: нет координат'} · ${missing}`,'font-size="10.5" class="pish-muted"'));
+  }
+  out.push(`<line x1="18" x2="${w-18}" y1="${secondTop-32}" y2="${secondTop-32}" stroke="#d9d4c8"/>`);
+  out.push(tx(18,secondTop-13,en?'2 · SELECTED OPENALEX TOPICS · A SEPARATE VIEW':'2 · ВЫБРАННЫЕ ТЕМЫ OPENALEX · ОТДЕЛЬНЫЙ СРЕЗ','font-size="12" font-weight="600" letter-spacing=".6"'));
+  const maxGrowth=Math.max(.2,...topics.filter(t=>finite(t.worldShareChange)).map(t=>Math.abs(t.worldShareChange)));
+  topics.forEach((t,i)=>{
+    const y=secondTop+i*topicH+10;
+    out.push(openLink(t));
+    if(narrow) {
+      out.push(`<rect x="18" y="${y}" width="${w-36}" height="111" rx="5" class="pish-node-box"/>`);
+      out.push(multiline(30,y+24,label(t),34,18,'font-size="13" font-weight="600"'));
+      out.push(tx(30,y+73,`${en?'World-share change':'Изменение мировой доли'} ${delta(t.worldShareChange)}`,'font-size="13" font-weight="600"'));
+      out.push(tx(30,y+96,`${en?'STANKIN recent works':'Новые работы СТАНКИН'} ${fmt(lang,t.nP2,0)}`,'font-size="10.5" class="pish-muted"'));
+    } else {
+      const barX=422,barW=Math.max(120,w-762),zero=barX+barW*.5;
+      out.push(multiline(18,y+13,label(t),49,16,'font-size="12.5" font-weight="600"'));
+      out.push(tx(18,y+48,`${en?'World works':'Работы мира'} ${fmt(lang,t.worldP1,0)} → ${fmt(lang,t.worldP2,0)}`,'font-size="10.5" class="pish-muted"'));
+      out.push(`<line x1="${barX}" x2="${barX+barW}" y1="${y+24}" y2="${y+24}" stroke="#e6e1d6" stroke-width="9"/><line x1="${zero}" x2="${zero}" y1="${y+14}" y2="${y+34}" stroke="#8b877d"/>`);
+      if(finite(t.worldShareChange)) {
+        const length=Math.abs(t.worldShareChange)/maxGrowth*barW*.45;
+        out.push(`<rect x="${t.worldShareChange>=0?zero:zero-length}" y="${y+19.5}" width="${length}" height="9" fill="${t.worldShareChange>=0?'#2f6db5':'#b4432d'}"/>`);
+      }
+      out.push(tx(barX+barW+15,y+29,delta(t.worldShareChange),'font-size="14" font-weight="600"'));
+      out.push(tx(w-16,y+17,`${en?'STANKIN n':'СТАНКИН n'}=${fmt(lang,t.nP2,0)}`,'font-size="12" font-weight="600" text-anchor="end"'));
+      out.push(tx(w-16,y+41,en?'Recent period':'Новое пятилетие','font-size="11" class="pish-muted" text-anchor="end"'));
+    }
+    out.push(closeLink(t));
+  });
+  out.push(multiline(18,h-(narrow?140:82),en?'Selected topics are not a complete world ranking. Growth is relative to all world publications of the same types and years.':'Выбранные темы — не полный мировой рейтинг. Рост считается относительно всех мировых работ тех же типов и годов.',narrow?45:150,14,'font-size="10.5" class="pish-muted"'));
+  out.push(multiline(18,h-(narrow?79:48),en?'Intervals describe the citation sample; they do not prove a winning topic or a ready product. Zero primary-topic works does not mean absent technology.':'Интервалы описывают выборку работ, а не доказывают приоритет темы или готовность продукта. Ноль работ с основной темой не означает отсутствие технологии.',narrow?46:150,14,'font-size="10.5" class="pish-muted"'));
+  return out.join('')+'</svg>';
+}

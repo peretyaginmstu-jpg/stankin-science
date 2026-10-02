@@ -22,7 +22,10 @@ import { buildIndustrialTopics } from '../content/topic-lenses.mjs';
 import { decisionsPage } from '../src/render/strategy.mjs';
 import { buildPishModel } from '../src/lib/pish.mjs';
 import { pishPage, pishLoopSpec } from '../src/render/pish.mjs';
-import { pishLoop } from '../src/charts/pish.mjs';
+import { pishAgendaSpecs } from '../src/render/pish-agenda.mjs';
+import { pishTopicTree, pishResearchPaths } from '../src/charts/pish-topics.mjs';
+import { PISH_TOPIC_UMBRELLA, PISH_TOPIC_FAMILIES, PISH_TOPIC_METHOD_CAVEAT } from '../content/pish-topics.mjs';
+import { pishLoop, pishTopicLandscape } from '../src/charts/pish.mjs';
 import { PISH_REVIEWED_AT, PISH_SOURCES, PISH_REQUIREMENTS, PISH_MINIMUMS, PISH_CANDIDATES } from '../content/pish.mjs';
 import { typograph } from '../src/lib/text.mjs';
 import { makeContext, langPrefix } from '../src/render/kit.mjs';
@@ -64,6 +67,7 @@ const JS_MODULES = [
   ['src/charts/charts.mjs','assets/js/charts/charts.mjs'],
   ['src/charts/strategy.mjs','assets/js/charts/strategy.mjs'],
   ['src/charts/pish.mjs','assets/js/charts/pish.mjs'],
+  ['src/charts/pish-topics.mjs','assets/js/charts/pish-topics.mjs'],
   ['src/lib/text.mjs','assets/js/lib/text.mjs'],
   ['src/lib/format.mjs','assets/js/lib/format.mjs'],
 ];
@@ -112,6 +116,9 @@ async function main() {
   const model = buildModel(snapshot, { competencies: COMPETENCIES, thresholds: THRESHOLDS, home: INSTITUTION.country });
   const version = await assetVersion();
   model.meta.assetVersion = version;
+  // Python renders the exported numbers in a separate step. The checker verifies
+  // their hashes before publication; a normal dependency-free Node build omits them.
+  model.meta.pythonPlots = process.env.PYTHON_PLOTS === '1';
   model.strategy = buildStrategy(model);
   model.industrialTopics = buildIndustrialTopics(snapshot, model);
   model.pish = buildPishModel(snapshot, model);
@@ -167,6 +174,12 @@ async function main() {
     // A saved SVG must link back to the page, rather than an absent local fragment.
     diagramSpec.nodes = diagramSpec.nodes.map(node => ({ ...node, href: `${diagramPageUrl}#pish-node-${node.id}` }));
     await write(`data/pish-loop-${lang}.svg`, pishLoop(diagramSpec, 1160, { standalone: true }));
+    const agendaSpecs = pishAgendaSpecs(diagramCtx);
+    const absoluteLinks = value => Array.isArray(value) ? value.map(absoluteLinks) : value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).map(([key,item]) => [key,key==='href' ? new URL(item,diagramPageUrl).href : absoluteLinks(item)])) : value;
+    for (const [key,renderer] of [['landscape',pishTopicLandscape],['tree',pishTopicTree],['paths',pishResearchPaths]]) {
+      await write(`data/pish-${key}-${lang}.svg`, renderer(absoluteLinks(agendaSpecs[key]),1160,{standalone:true}));
+    }
     await render('collaboration', 'collaboration/', t.collaboration.title, t.collaboration.lead, (ctx) => collaborationPage(ctx));
     await render('method', 'method/', t.method.title, t.method.lead, (ctx) => methodPage(ctx, { competencies: COMPETENCIES }));
   }
@@ -188,7 +201,7 @@ async function main() {
   const { competencyTopics, ...exportable } = model;
   await write('data/metrics.json', `${JSON.stringify({ ...exportable, competencyTopics, competencyNames: Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.name])) }, null, 1)}\n`);
   await write('data/strategy.json', `${JSON.stringify({ ...model.strategy, industrialTopics: model.industrialTopics }, null, 2)}\n`);
-  await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES }, null, 2)}\n`);
+  await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES, agenda:{umbrella:PISH_TOPIC_UMBRELLA,families:PISH_TOPIC_FAMILIES,caveat:PISH_TOPIC_METHOD_CAVEAT} }, null, 2)}\n`);
   await write('data/competencies.csv', csv(
     ['id', 'name_ru', 'name_en', 'works', 'world_works', 'world_share', 'specialisation_index', 'fwci', 'top10_share', 'intl_share', 'growth_university', 'growth_world', 'rank_russia', 'rank_world', 'topics'],
     model.competencies.map((c) => {
@@ -211,6 +224,7 @@ async function main() {
     source: snapshot.source,
     demo,
     fetchedAt: snapshot.fetchedAt,
+    pythonPlots: model.meta.pythonPlots,
     builtAt: new Date().toISOString(),
     base,
     period: model.meta.period,

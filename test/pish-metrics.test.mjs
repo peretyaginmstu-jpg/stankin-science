@@ -31,6 +31,17 @@ function fixture(works = []) {
 }
 const modelOf = (snapshot) => buildModel(snapshot, { competencies, thresholds: { competencyMinWorks: 15, trendMinWorldWorks: 10, trendFastGrowth: 1.5 } });
 
+test('primary-topic evidence uses separate cohorts and distinguishes world from university-share changes',()=>{
+  const snapshot=fixture([work('W1','T0',2000,{fw:4}),work('W2','T0',2002,{fw:0}),work('W3','T0',2003,{fw:2})]);
+  const model=modelOf(snapshot);
+  model.industrialTopics=[{id:'T0',name:{ru:'Topic',en:'Topic'}},{id:'Tmissing',name:{ru:'Absent',en:'Absent'}}];
+  const p=buildPishModel(snapshot,model),r=p.topicEvidence.find(t=>t.id==='T0'),missing=p.topicEvidence.find(t=>t.id==='Tmissing');
+  assert.equal(r.nP1,1);assert.equal(r.nP2,2);assert.equal(r.cohorts.p1.fwci,4);assert.equal(r.cohorts.p2.fwci,1);
+  assert.equal(r.worldShareChange,0.5);assert.equal(r.ownWorldShareChange,-0.333333);
+  assert.equal(missing.available,false);assert.equal(missing.nP2,null);assert.equal(missing.cohorts,null);
+  assert.ok(p.mathAudit.topicChecks.every(c=>c.passed));
+});
+
 test('cohort summaries retain zero and omit non-finite or absent measurements', () => {
   const works = [
     work('W1', 'T0', 2000, { fw: 0, p: 0.95, t10: 1 }),

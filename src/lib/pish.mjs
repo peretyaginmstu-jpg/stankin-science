@@ -204,15 +204,61 @@ export function buildPishModel(snapshot, model) {
     selectedTopic: fwciSummary(coatingWorks.filter((work) => work.tp === topicId), home),
   };
 
+  // These primary-topic clusters are distinct from the broad competency groups.
+  const extraLenses = [
+    { id: 'T10377', name: { ru: 'Механика металлов и тонких плёнок', en: 'Metal and thin-film mechanics' } },
+    { id: 'T12362', name: { ru: 'Трибология и анализ износа', en: 'Tribology and wear analysis' } },
+  ];
+  const topicEvidence = [...(model.industrialTopics ?? []), ...extraLenses].map(lens => {
+    const taxonomy = snapshot.taxonomy.topics.find(topic => topic.id === lens.id);
+    const counts = snapshot.world.topics[lens.id];
+    const available = taxonomy != null && counts != null;
+    const list = works.filter(work => work.tp === lens.id);
+    const listP1 = list.filter(work => inPeriod(work.y, period.p1));
+    const listP2 = list.filter(work => inPeriod(work.y, period.p2));
+    const [worldP1, worldP2] = available ? counts : [null, null];
+    const worldShareRatio = ratio(ratio(worldP2, model.totals?.worldP2), ratio(worldP1, model.totals?.worldP1));
+    const ownWorldShareRatio = ratio(ratio(listP2.length, worldP2), ratio(listP1.length, worldP1));
+    return { id: lens.id, name: lens.name, openalexName: taxonomy?.name ?? null, available,
+      n: available ? list.length : null, nP1: available ? listP1.length : null, nP2: available ? listP2.length : null,
+      worldP1, worldP2, worldShareChange: worldShareRatio == null ? null : rounded(worldShareRatio - 1),
+      ownWorldShareChange: ownWorldShareRatio == null ? null : rounded(ownWorldShareRatio - 1),
+      cohorts: available ? { p1: summarizeCohort(listP1, { home }), p2: summarizeCohort(listP2, { home }) } : null,
+    };
+  });
+
+  const mathAudit = auditDataset(snapshot, model, works, rows);
+  mathAudit.topicChecks = topicEvidence.map(topic => {
+    const reference = model.topics?.find(row => row.id === topic.id);
+    const meanOf = range => {
+      const values = works.filter(work => work.tp === topic.id && inPeriod(work.y,range) && Number.isFinite(work.fw)).map(work=>work.fw);
+      return values.length ? rounded(values.reduce((sum,value)=>sum+value,0)/values.length,3) : null;
+    };
+    const expectedWorld = topic.available && topic.worldP1>0 && model.totals.worldP2>0
+      ? rounded(topic.worldP2*model.totals.worldP1/(topic.worldP1*model.totals.worldP2)-1) : null;
+    const expectedOwn = topic.available && topic.nP1>0 && topic.worldP1>0 && topic.worldP2>0
+      ? rounded(topic.nP2*topic.worldP1/(topic.nP1*topic.worldP2)-1) : null;
+    const countsMatch = topic.available
+      ? topic.n === topic.nP1 + topic.nP2 && topic.n === (reference?.n ?? 0)
+        && topic.nP1 === (reference?.nP1 ?? 0) && topic.nP2 === (reference?.nP2 ?? 0)
+        && topic.nP1 <= topic.worldP1 && topic.nP2 <= topic.worldP2
+      : topic.n == null && topic.nP1 == null && topic.nP2 == null && topic.worldShareChange == null;
+    const metricsMatch = topic.available ? topic.worldShareChange===expectedWorld && topic.ownWorldShareChange===expectedOwn
+      && topic.cohorts.p1.fwci===meanOf(period.p1) && topic.cohorts.p2.fwci===meanOf(period.p2)
+      : topic.cohorts==null;
+    return { id: `primary-topic-${topic.id}`, passed: countsMatch && metricsMatch };
+  });
+
   return {
     fetchedAt: snapshot.fetchedAt ?? null,
     period,
     totalWorks: model.totals?.n ?? works.length,
     excludedWorks: snapshot.stankin.affiliationAudit?.excluded ?? null,
     rows,
+    topicEvidence,
     sensitivity,
     candidateEvidence: candidateEvidence(works, sourceRows, period),
-    mathAudit: auditDataset(snapshot, model, works, rows),
+    mathAudit,
     limitations: [
       'Cohorts describe publication years at one snapshot date. FWCI already normalises year, type and subfield over publication year plus three following years; windows ending in or after the snapshot year remain nominally incomplete. Differences in FWCI do not establish a causal change in research performance.',
       'FWCI measures normalised citation performance, not research quality. Its mean can be sensitive to a few highly cited works; the median and topic sensitivity supplement the unchanged full-corpus mean.',

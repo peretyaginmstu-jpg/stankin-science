@@ -11,6 +11,8 @@
 import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { SITE } from '../config/site.mjs';
+import { createHash } from 'node:crypto';
+import { verifyPlotIntegrity } from './plot-integrity.mjs';
 
 const args = process.argv.slice(2);
 const dir = path.resolve(args.includes('--dir') ? args[args.indexOf('--dir') + 1] : 'dist');
@@ -57,9 +59,16 @@ async function main() {
   const base = build.base ?? '/stankin-science/';
   const files = await walk(dir);
   const pish = JSON.parse(await readFile(path.join(dir, 'data/pish.json'), 'utf8'));
+  if (build.pythonPlots) {
+    const generatorSha = createHash('sha256').update(await readFile(new URL('./scientific-plots.py',import.meta.url))).digest('hex');
+    for (const error of await verifyPlotIntegrity(dir,pish,generatorSha)) fail(error);
+  }
   const auditChecks = pish.mathAudit?.checks;
   if (!Array.isArray(auditChecks) || auditChecks.length === 0) fail('Нет численного аудита научных показателей.');
   else for (const check of auditChecks) if (!check.passed) fail(`Не сошлась научная проверка: ${check.id}`);
+  const topicChecks = pish.mathAudit?.topicChecks;
+  if (!Array.isArray(topicChecks) || topicChecks.length === 0) fail('Нет проверки научных подтем.');
+  else for (const check of topicChecks) if (!check.passed) fail(`Не сошлась проверка подтемы: ${check.id}`);
   const rel = (f) => path.relative(dir, f).split(path.sep).join('/');
   const htmlFiles = files.filter((f) => f.endsWith('.html'));
   const pages = new Set(htmlFiles.map(rel));
