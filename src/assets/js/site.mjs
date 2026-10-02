@@ -2,6 +2,9 @@
 // Без JavaScript сайт остаётся рабочим: графики нарисованы при сборке, данные есть в таблицах.
 
 import { RENDERERS } from './charts/charts.mjs';
+import { strategyMatrix, capabilityHeatmap } from './charts/strategy.mjs';
+
+const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap };
 
 const lang = document.documentElement.lang || 'ru';
 
@@ -149,7 +152,7 @@ function crosshair(body, layer, clientX, clientY) {
 for (const fig of document.querySelectorAll('figure.chart[data-chart]')) {
   const body = fig.querySelector('.chart-body');
   const specEl = fig.querySelector('.chart-spec');
-  const render = RENDERERS[fig.dataset.chart];
+  const render = ALL_RENDERERS[fig.dataset.chart];
   if (!body || !specEl || !render) continue;
   let spec;
   try {
@@ -173,6 +176,11 @@ for (const fig of document.querySelectorAll('figure.chart[data-chart]')) {
     hideTooltip(body);
   };
   bindTooltips(body);
+  fig.addEventListener('strategy-redraw', () => {
+    spec = JSON.parse(specEl.textContent);
+    lastWidth = 0;
+    draw();
+  });
   if ('ResizeObserver' in window) {
     let frame = 0;
     new ResizeObserver(() => {
@@ -182,6 +190,33 @@ for (const fig of document.querySelectorAll('figure.chart[data-chart]')) {
   } else {
     draw();
   }
+}
+
+// Strategic lenses reuse the same data and numbering; they never recompute evidence.
+for (const select of document.querySelectorAll('[data-strategy-filter]')) {
+  const fig = document.getElementById(select.dataset.strategyFilter);
+  if (!fig) continue;
+  const original = JSON.parse(fig.querySelector('.chart-spec').textContent);
+  select.addEventListener('change', () => {
+    const include = r => select.value === 'all' || (select.value === 'growth' ? r.worldShareChange > .1 : r.status === select.value);
+    const rows = original.rows.filter(include);
+    const specEl = fig.querySelector('.chart-spec');
+    // Keep every row in the spec, so point numbers remain stable under filtering.
+    const spec = { ...original, rows: original.rows.map(r => ({ ...r, filtered: !include(r) })) };
+    specEl.textContent = JSON.stringify(spec);
+    fig.dispatchEvent(new Event('strategy-redraw'));
+    for (const item of fig.querySelectorAll('[data-strategy-item]')) item.hidden = !rows.some(r => r.id === item.dataset.strategyItem);
+    const count = select.closest('.strategy-controls').querySelector('.strategy-filter-count');
+    count.textContent = `${rows.length} ${document.documentElement.lang === 'ru' ? 'направлений' : 'fields'}`;
+  });
+}
+
+for (const button of document.querySelectorAll('[data-horizon]')) {
+  button.addEventListener('click', () => {
+    const section = button.closest('section');
+    for (const b of section.querySelectorAll('[data-horizon]')) b.setAttribute('aria-pressed', String(b === button));
+    for (const panel of section.querySelectorAll('[data-horizon-panel]')) panel.hidden = panel.dataset.horizonPanel !== button.dataset.horizon;
+  });
 }
 
 // ---------- сортировка таблиц ----------

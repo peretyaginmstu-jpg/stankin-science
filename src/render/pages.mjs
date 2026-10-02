@@ -2,6 +2,7 @@
 
 import { bubble, lines, columns, hbars, divergingBar, refBar, sparkline } from '../charts/charts.mjs';
 import { esc, kpis, figure, legend, bubbleKey, table, cell, text, workItem, rankText, quadrantTag, tip } from './kit.mjs';
+import { strategyBrief, strategyOverview, competencyDecision, topicsSection } from './strategy.mjs';
 
 const visibleOf = (model) => model.competencies.filter((c) => c.visible);
 
@@ -225,10 +226,10 @@ export function homePage(ctx) {
       eyebrow: t.home.eyebrow(period.from, period.to),
       title: t.home.title,
       lead: t.home.lead,
-      extra: `${dataNote(ctx)}${tiles}`,
+      extra: `${dataNote(ctx)}${tiles}${strategyBrief(ctx)}`,
     }),
-    section('map', t.home.mapTitle, t.home.mapLead, `${map}${quadrantGrid(ctx)}`),
-    section('cards', t.home.cardsTitle, t.home.cardsLead(model.meta.thresholds.competencyMinWorks), competencyCards(ctx)),
+    strategyOverview(ctx),
+    section('map', t.home.mapTitle, t.home.mapLead, `<details class="strategy-model-details"><summary>${esc(ctx.lang === 'ru' ? 'Открыть дополнительную карту специализации за 2016–2025' : 'Open the additional 2016–2025 specialisation map')}</summary>${map}${quadrantGrid(ctx)}</details>`),
     section('dynamics-section', t.home.dynamicsTitle, t.home.dynamicsLead(ctx.change(m.growthOwn), ctx.change(m.growthWorld), period.p1, period.p2), `<div class="grid-2">${dynamics}${perYear}</div>`),
     section('venues-section', t.home.venuesTitle, t.home.venuesLead, `<div class="grid-side">${venues}<div class="side-box"><p class="side-title">${esc(t.home.venuesKinds)}</p>${kindList}</div></div>`),
     section('collab-section', t.home.collabTitle, t.home.collabLead, `<div class="grid-side">${collab}<div class="side-box">
@@ -279,6 +280,7 @@ export function competenciesPage(ctx) {
   return [
     hero(ctx, { eyebrow: t.site.university, title: t.competencies.title, lead: t.competencies.lead(vis.length), extra: dataNote(ctx) }),
     section('compare', t.competencies.tableTitle, t.competencies.hidden(model.meta.thresholds.competencyMinWorks), competencyTable(ctx, vis)),
+    section('cards', t.home.cardsTitle, t.home.cardsLead(model.meta.thresholds.competencyMinWorks), competencyCards(ctx)),
     section('subfields', t.competencies.mapTitle, t.competencies.mapLead(min), subTable),
   ].join('\n');
 }
@@ -422,7 +424,7 @@ export function competencyPage(ctx, c, { prev, next }) {
       crumb: crumbs,
       title: def.name[ctx.lang],
       lead: def.summary[ctx.lang],
-      extra: `${tiles}<div class="facts">${sentences.map((s) => `<p>${esc(s)}</p>`).join('')}</div>${position}`,
+      extra: `${tiles}<div class="facts">${sentences.map((s) => `<p>${esc(s)}</p>`).join('')}</div>${position}${competencyDecision(ctx,c)}`,
     }),
     section('years', t.competency.dynamicsTitle, '', dynamics),
     section('leaders', t.competency.leadersTitle, '', leaders),
@@ -517,6 +519,7 @@ export function trendsPage(ctx) {
 
   return [
     hero(ctx, { eyebrow: t.site.university, title: t.trends.title, lead: t.trends.lead, extra: dataNote(ctx) }),
+    topicsSection(ctx),
     section('portfolio-section', t.trends.portfolioTitle, t.trends.portfolioLead, portfolio),
     section('fast', t.trends.fastTitle, t.trends.fastLead(ctx.int(thresholds.trendMinWorldWorks), ctx.change(thresholds.trendFastGrowth), period.p1, period.p2), fastTable),
     section('white', t.trends.whiteTitle, t.trends.whiteLead, white),
@@ -588,6 +591,7 @@ export function methodPage(ctx, { competencies }) {
   blocks.push(tightSection('affiliation-audit', t.method.affiliationTitle, '', `<p>${esc(affiliationSummary)}</p><p>${esc(t.method.affiliationPolicy)}</p><p>${esc(t.method.affiliationContext)}</p>`));
   blocks.push(tightSection('window', t.method.windowTitle, '', `<p>${esc(t.method.window({ from: p.from, to: p.to, p1: range(p.p1), p2: range(p.p2) }))}</p>`));
   blocks.push(tightSection('metrics', t.method.metricsTitle, '', `<dl class="defs">${t.method.metrics.map(([a, b]) => `<div><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl>`));
+  blocks.push(tightSection('strategic-method',ctx.lang === 'ru' ? 'Правила стратегической карты' : 'Strategic map rules','',`<p><a href="${esc(ctx.page('decisions/#decision-method'))}">${esc(ctx.lang === 'ru' ? 'Формулы мировой динамики, силы публикационной базы, ранга возможностей и ограничения выводов' : 'Formulas for world dynamics, publication-base strength, opportunity ranking and limits of interpretation')}</a></p><p><a href="${esc(ctx.asset('data/strategy.json'))}" download>${esc(ctx.lang === 'ru' ? 'Скачать воспроизводимый расчёт' : 'Download the reproducible calculation')}</a></p>`));
 
   const compBlocks = competencies.map((def) => {
     const c = model.competencies.find((x) => x.id === def.id);

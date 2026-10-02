@@ -16,6 +16,9 @@ import { COMPETENCIES } from '../content/competencies.mjs';
 import * as TAXONOMY from '../content/taxonomy.mjs';
 import { LANGS, STRINGS } from '../content/i18n.mjs';
 import { buildModel } from '../src/lib/metrics.mjs';
+import { buildStrategy } from '../src/lib/strategy.mjs';
+import { buildIndustrialTopics } from '../content/topic-lenses.mjs';
+import { decisionsPage } from '../src/render/strategy.mjs';
 import { typograph } from '../src/lib/text.mjs';
 import { makeContext, langPrefix } from '../src/render/kit.mjs';
 import { layout } from '../src/render/layout.mjs';
@@ -59,6 +62,7 @@ async function copyAssets() {
   await cp(path.join(a, 'js/site.mjs'), path.join(outDir, 'assets/js/site.mjs'));
   // Графики и форматирование работают и в браузере: копируем модули с той же взаимной раскладкой.
   await cp(path.join(ROOT, 'src/charts/charts.mjs'), path.join(outDir, 'assets/js/charts/charts.mjs'));
+  await cp(path.join(ROOT, 'src/charts/strategy.mjs'), path.join(outDir, 'assets/js/charts/strategy.mjs'));
   await cp(path.join(ROOT, 'src/lib/text.mjs'), path.join(outDir, 'assets/js/lib/text.mjs'));
   await cp(path.join(ROOT, 'src/lib/format.mjs'), path.join(outDir, 'assets/js/lib/format.mjs'));
 }
@@ -84,6 +88,8 @@ async function main() {
   const snapshot = JSON.parse(await readFile(dataFile, 'utf8'));
   if (snapshot.schema !== 1) throw new Error(`Неизвестная версия снимка: ${snapshot.schema}`);
   const model = buildModel(snapshot, { competencies: COMPETENCIES, thresholds: THRESHOLDS, home: INSTITUTION.country });
+  model.strategy = buildStrategy(model);
+  model.industrialTopics = buildIndustrialTopics(snapshot, model);
 
   // Дополнения для страниц: источники публикаций, английские названия классификации, состав компетенций.
   model.sources = snapshot.stankin.sources ?? {};
@@ -127,6 +133,7 @@ async function main() {
       await render('competency', `competencies/${c.id}/`, def.name[lang], def.summary[lang], (ctx) => competencyPage(ctx, c, { prev: visible[i - 1], next: visible[i + 1] }));
     }
     await render('trends', 'trends/', t.trends.title, t.trends.lead, (ctx) => trendsPage(ctx));
+    await render('decisions', 'decisions/', t.nav.decisions, t.site.description, decisionsPage);
     await render('collaboration', 'collaboration/', t.collaboration.title, t.collaboration.lead, (ctx) => collaborationPage(ctx));
     await render('method', 'method/', t.method.title, t.method.lead, (ctx) => methodPage(ctx, { competencies: COMPETENCIES }));
   }
@@ -147,6 +154,7 @@ async function main() {
   // Данные для загрузки
   const { competencyTopics, ...exportable } = model;
   await write('data/metrics.json', `${JSON.stringify({ ...exportable, competencyTopics, competencyNames: Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.name])) }, null, 1)}\n`);
+  await write('data/strategy.json', `${JSON.stringify({ ...model.strategy, industrialTopics: model.industrialTopics }, null, 2)}\n`);
   await write('data/competencies.csv', csv(
     ['id', 'name_ru', 'name_en', 'works', 'world_works', 'world_share', 'specialisation_index', 'fwci', 'top10_share', 'intl_share', 'growth_university', 'growth_world', 'rank_russia', 'rank_world', 'topics'],
     model.competencies.map((c) => {
