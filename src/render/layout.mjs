@@ -31,6 +31,7 @@ const CSP = [
 
 export function layout(ctx, { title, description, body, routeKey, routePath, demo = false }) {
   const { t, lang } = ctx;
+  const versionedAsset = (file) => `${ctx.asset(file)}${ctx.model.meta.assetVersion ? `?v=${ctx.model.meta.assetVersion}` : ''}`;
   const navCurrent = routeKey === 'competency' ? 'competencies' : routeKey;
   const fullTitle = routeKey === 'home' ? t.site.full : `${title} — ${t.site.full}`;
   const logo = LOGO[lang] ?? LOGO.ru;
@@ -66,9 +67,9 @@ ${robots}
 <link rel="apple-touch-icon" href="${esc(ctx.asset('assets/img/apple-touch-icon.png'))}">
 ${alternates}
 <link rel="preload" href="${esc(ctx.asset(`assets/fonts/golos-text-variable-${lang === 'ru' ? 'cyrillic' : 'latin'}.woff2`))}" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="${esc(ctx.asset('assets/css/site.css'))}">
-<link rel="stylesheet" href="${esc(ctx.asset('assets/css/strategy.css'))}">
-<script type="module" src="${esc(ctx.asset('assets/js/site.mjs'))}"></script>
+<link rel="stylesheet" href="${esc(versionedAsset('assets/css/site.css'))}">
+<link rel="stylesheet" href="${esc(versionedAsset('assets/css/strategy.css'))}">
+<script type="module" src="${esc(versionedAsset('assets/js/site.mjs'))}"></script>
 </head>
 <body class="page-${esc(routeKey)}">
 <a class="skip" href="#main">${esc(t.ui.skip)}</a>

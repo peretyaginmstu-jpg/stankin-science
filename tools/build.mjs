@@ -11,6 +11,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { SITE, INSTITUTION, THRESHOLDS } from '../config/site.mjs';
 import { COMPETENCIES } from '../content/competencies.mjs';
 import * as TAXONOMY from '../content/taxonomy.mjs';
@@ -54,17 +55,33 @@ async function write(file, content) {
   await writeFile(full, content);
 }
 
-async function copyAssets() {
+const JS_MODULES = [
+  ['src/assets/js/site.mjs','assets/js/site.mjs'],
+  ['src/charts/charts.mjs','assets/js/charts/charts.mjs'],
+  ['src/charts/strategy.mjs','assets/js/charts/strategy.mjs'],
+  ['src/lib/text.mjs','assets/js/lib/text.mjs'],
+  ['src/lib/format.mjs','assets/js/lib/format.mjs'],
+];
+
+async function assetVersion() {
+  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css'];
+  const contents = await Promise.all(files.map(file=>readFile(path.join(ROOT,file))));
+  const hash = createHash('sha256');
+  for (const content of contents) hash.update(content);
+  return hash.digest('hex').slice(0,16);
+}
+
+async function copyAssets(version) {
   const a = path.join(ROOT, 'src/assets');
   await cp(path.join(a, 'css'), path.join(outDir, 'assets/css'), { recursive: true });
   await cp(path.join(a, 'fonts'), path.join(outDir, 'assets/fonts'), { recursive: true });
   await cp(path.join(a, 'img'), path.join(outDir, 'assets/img'), { recursive: true });
-  await cp(path.join(a, 'js/site.mjs'), path.join(outDir, 'assets/js/site.mjs'));
-  // Графики и форматирование работают и в браузере: копируем модули с той же взаимной раскладкой.
-  await cp(path.join(ROOT, 'src/charts/charts.mjs'), path.join(outDir, 'assets/js/charts/charts.mjs'));
-  await cp(path.join(ROOT, 'src/charts/strategy.mjs'), path.join(outDir, 'assets/js/charts/strategy.mjs'));
-  await cp(path.join(ROOT, 'src/lib/text.mjs'), path.join(outDir, 'assets/js/lib/text.mjs'));
-  await cp(path.join(ROOT, 'src/lib/format.mjs'), path.join(outDir, 'assets/js/lib/format.mjs'));
+  // Version the complete import graph, so a new HTML page cannot load an old module.
+  for (const [source,target] of JS_MODULES) {
+    const code = await readFile(path.join(ROOT,source),'utf8');
+    const versioned = code.replace(/from (['"])(\.\.?\/[^'"]+\.mjs)\1/g,(_,quote,url)=>`from ${quote}${url}?v=${version}${quote}`);
+    await write(target,versioned);
+  }
 }
 
 function logSummary(model) {
@@ -88,6 +105,8 @@ async function main() {
   const snapshot = JSON.parse(await readFile(dataFile, 'utf8'));
   if (snapshot.schema !== 1) throw new Error(`Неизвестная версия снимка: ${snapshot.schema}`);
   const model = buildModel(snapshot, { competencies: COMPETENCIES, thresholds: THRESHOLDS, home: INSTITUTION.country });
+  const version = await assetVersion();
+  model.meta.assetVersion = version;
   model.strategy = buildStrategy(model);
   model.industrialTopics = buildIndustrialTopics(snapshot, model);
 
@@ -107,7 +126,7 @@ async function main() {
 
   await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
-  await copyAssets();
+  await copyAssets(version);
 
   const visible = model.competencies.filter((c) => c.visible).sort((a, b) => (b.ai ?? 0) - (a.ai ?? 0));
   const pages = [];

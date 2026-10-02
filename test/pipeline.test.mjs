@@ -47,6 +47,12 @@ test('выгрузка, сборка и проверка на имитации A
 
     const out = path.join(dir, 'site');
     await run('node', [path.join(ROOT, 'tools/build.mjs'), '--data', snapshotFile, '--out', out], { cwd: ROOT });
+    const metrics = JSON.parse(await readFile(path.join(out,'data/metrics.json'),'utf8'));
+    const html = await readFile(path.join(out,'index.html'),'utf8');
+    const script = await readFile(path.join(out,'assets/js/site.mjs'),'utf8');
+    assert.match(metrics.meta.assetVersion,/^[a-f0-9]{16}$/);
+    assert.ok(html.includes(`assets/js/site.mjs?v=${metrics.meta.assetVersion}`));
+    assert.ok(script.includes(`./charts/strategy.mjs?v=${metrics.meta.assetVersion}`));
     const checked = await run('node', [path.join(ROOT, 'tools/check.mjs'), '--dir', out, '--publish'], { cwd: ROOT });
     assert.match(checked.stdout, /Проверка пройдена/);
   } finally {
