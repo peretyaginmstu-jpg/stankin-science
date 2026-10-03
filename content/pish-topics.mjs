@@ -157,7 +157,7 @@ export const PISH_TOPIC_FAMILIES = [
     title: { ru: 'Инструмент и материалы под задачу заказчика', en: 'Tooling and materials for the customer’s task' },
     why: { ru: 'Работы по материалам и покрытиям можно связать с прогнозом свойств и ресурса инструмента. В мировой литературе растёт доля тем машинного обучения для материалов и диагностики оборудования. Это широкие темы; они не сводятся к режущему инструменту.', en: 'Materials and coatings research can connect to property and tool-life prediction. Machine learning for materials and equipment diagnostics have growing shares of world literature. These are broad topics, not limited to cutting tools.' },
     role: { ru: 'Материалы и покрытия дают исследовательскую основу. Нужно проверить, какие данные испытаний СТАНКИН можно использовать для обучения моделей и какие задачи требуют партнёра.', en: 'Materials and coatings provide a research base. Check which STANKIN test data can train models and which tasks require a partner.' },
-    gaps: { ru: 'Отсутствие работ с выбранной основной темой OpenAlex не означает, что нет специалистов или результатов. Нужны проверка конкретных работ, данные испытаний и сравнение с обычным инструментом.', en: 'No works assigned to a selected primary OpenAlex topic does not imply absent expertise or results. Check individual papers, test data and performance against existing tooling.' },
+    gaps: { ru: 'Работ с выбранной основной темой OpenAlex нет. Нужны проверка конкретных работ, данные испытаний и сравнение с обычным инструментом.', en: 'No works carry the selected primary OpenAlex topic. Check individual papers, test data and performance against existing tooling.' },
     subtopics: [
       {
         id: 'materials-property-prediction',

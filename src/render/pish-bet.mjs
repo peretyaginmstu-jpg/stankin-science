@@ -61,7 +61,7 @@ export function pishBetMapSpec(ctx) {
       product: L(ctx, 'Продукт, лицензия, обученные инженеры', 'Product, licence, trained engineers'),
       money: L(ctx, '≥50% средств, заказы НИОКР, приёмка', '≥50% funding, R&D orders, acceptance'),
     },
-    note: L(ctx, 'Авторское предложение. Заказчик и соисполнители не выбраны; роли и числа FWCI — из текущего снимка OpenAlex, они не доказывают готовность продукта.', 'Authorial proposal. The customer and co-executors are not yet chosen; roles are proposed and FWCI values come from the current OpenAlex snapshot, not product readiness.'),
+    note: L(ctx, 'Заказчик и соисполнители ещё не выбраны. FWCI — работы 2021–2025 из текущего снимка OpenAlex.', 'The customer and co-executors are not yet chosen. FWCI covers 2021–2025 works in the current OpenAlex snapshot.'),
   };
 }
 
