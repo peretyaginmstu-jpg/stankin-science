@@ -21,13 +21,22 @@ export const STRINGS = {
     nav: {
       'think-tank': 'Think Tank',
       home: 'Обзор',
-      decisions: 'Куда развиваться',
-      pish: 'ПИШ: ставка',
+      decisions: 'Где усиливать науку',
+      pish: 'Ставка ПИШ',
       competencies: 'Компетенции',
       trends: 'Мировые тренды',
       'industry-index': 'Отраслевой индекс',
       collaboration: 'Сотрудничество',
       method: 'Методика',
+    },
+    // H1 раздела = название из меню + уточнение (пустое — заголовок совпадает с меню).
+    navHeading: {
+      decisions: '',
+      pish: 'интеллект отечественного станка',
+      'think-tank': 'на какие научные задачи сделать ставку',
+      trends: 'куда движется наука о станках',
+      'industry-index': 'место СТАНКИН в науке о станках',
+      method: '',
     },
     ui: {
       skip: 'Перейти к содержанию',
@@ -242,7 +251,7 @@ export const STRINGS = {
       types: { education: 'вуз', facility: 'научная организация', company: 'компания', government: 'госорган', healthcare: 'медицинская организация', nonprofit: 'некоммерческая организация', archive: 'архив', other: 'другое', funder: 'фонд' },
     },
     method: {
-      title: 'Методика и данные',
+      title: 'Методика',
       lead: 'Как собраны данные, как рассчитаны показатели и где у них ограничения.',
       sourceTitle: 'Источник данных',
       source: (o) => `Данные выгружены ${o.date} из OpenAlex — открытой базы научных публикаций (лицензия CC0); по ним рассчитаны все показатели сайта. Публикации университета отобраны по аффилиации авторов с записью OpenAlex ${o.ids} (ROR ${o.ror}): учитывается работа, у которой хотя бы один автор указал университет (полный подсчёт).`,
@@ -303,13 +312,21 @@ export const STRINGS = {
     nav: {
       'think-tank': 'Think Tank',
       home: 'Overview',
-      decisions: 'Development',
-      pish: 'PISH: the bet',
+      decisions: 'Where to strengthen research',
+      pish: 'The PISH bet',
       competencies: 'Competencies',
       trends: 'World trends',
       'industry-index': 'Industry index',
       collaboration: 'Collaboration',
       method: 'Methodology',
+    },
+    navHeading: {
+      decisions: '',
+      pish: 'intelligence for domestic machine tools',
+      'think-tank': 'which research problems to bet on',
+      trends: 'where machine-tool research is heading',
+      'industry-index': 'STANKIN’s place in machine-tool research',
+      method: '',
     },
     ui: {
       skip: 'Skip to content',
@@ -524,7 +541,7 @@ export const STRINGS = {
       types: { education: 'university', facility: 'research institute', company: 'company', government: 'government body', healthcare: 'healthcare', nonprofit: 'non-profit', archive: 'archive', other: 'other', funder: 'funder' },
     },
     method: {
-      title: 'Methodology and data',
+      title: 'Methodology',
       lead: 'How the data were collected, how the indicators are calculated and where their limits are.',
       sourceTitle: 'Data source',
       source: (o) => `All indicators are calculated from OpenAlex, an open database of scholarly publications (CC0 licence). Data fetched on ${o.date}. University publications are selected by author affiliation with OpenAlex record ${o.ids} (ROR ${o.ror}); a paper counts if at least one author lists the university (full counting).`,

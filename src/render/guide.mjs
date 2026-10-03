@@ -6,19 +6,21 @@ import { PISH_BET } from '../../content/pish-bet.mjs';
 const L = (ctx, ru, en) => ctx.lang === 'en' ? en : ru;
 const phrase = (ctx, v) => typeof v === 'string' ? v : v?.[ctx.lang] ?? v?.ru ?? '';
 
-export function betBanner(ctx, { secondary = ['decisions/', 'Где усиливать науку', 'Where to strengthen research'] } = {}) {
-  return `<aside class="bet-banner" aria-labelledby="bet-banner-title"><div><p class="eyebrow">${esc(L(ctx, 'ПИШ 2026 · предлагаемая ставка', 'PISH 2026 · proposed bet'))}</p><h2 id="bet-banner-title">${esc(phrase(ctx, PISH_BET.title))}</h2><p>${esc(L(ctx, 'Встраиваемая система адаптивного управления точной обработкой: измерить → предсказать → скорректировать → подтвердить. Опора — резание и метрология; управление, диагностику и ИИ усиливают партнёры. Условие — письмо квалифицированного заказчика до 31 октября.', 'An embedded adaptive control system for precision machining: measure → predict → correct → confirm. Built on machining and metrology; partners strengthen control, diagnostics and AI. Condition: a qualified customer letter by 31 October.'))}</p></div><div class="bet-banner-actions"><a class="bet-banner-primary" href="${esc(ctx.page('pish/'))}#pish-bet">${esc(L(ctx, 'Ставка и обоснование', 'The bet and its rationale'))} →</a><a href="${esc(ctx.page(secondary[0]))}">${esc(L(ctx, secondary[1], secondary[2]))} →</a></div></aside>`;
+// secondary — ключ раздела из меню; подпись ссылки берётся из названия раздела.
+export function betBanner(ctx, { secondary = 'decisions' } = {}) {
+  return `<aside class="bet-banner" aria-labelledby="bet-banner-title"><div><p class="eyebrow">${esc(L(ctx, 'ПИШ 2026 · предлагаемая ставка', 'PISH 2026 · proposed bet'))}</p><h2 id="bet-banner-title">${esc(phrase(ctx, PISH_BET.title))}</h2><p>${esc(L(ctx, 'Встраиваемая система адаптивного управления точной обработкой: измерить → предсказать → скорректировать → подтвердить. Опора — резание и метрология; управление, диагностику и ИИ усиливают партнёры. Условие — письмо квалифицированного заказчика до 31 октября.', 'An embedded adaptive control system for precision machining: measure → predict → correct → confirm. Built on machining and metrology; partners strengthen control, diagnostics and AI. Condition: a qualified customer letter by 31 October.'))}</p></div><div class="bet-banner-actions"><a class="bet-banner-primary" href="${esc(ctx.page('pish/'))}#pish-bet">${esc(L(ctx, 'Ставка и обоснование', 'The bet and its rationale'))} →</a><a href="${esc(ctx.page(`${secondary}/`))}">${esc(ctx.t.nav[secondary])} →</a></div></aside>`;
 }
 
+// Карточки «Что где смотреть»: порядок совпадает с меню, названия берутся из него же (content/i18n.mjs → nav).
 const GUIDE = [
-  ['decisions/', 'Куда развиваться', 'Where to develop', 'Где мы сильны, где растёт мир и что соединить для умного станка.', 'Where we are strong, where the world grows and what to connect for a smart machine tool.'],
-  ['pish/', 'ПИШ: ставка', 'PISH: the bet', 'Что предложить в заявке 2026 года, чем это отличается от действующей школы и при каком условии подавать.', 'What to propose in the 2026 application, how it differs from the existing school and when to apply.'],
-  ['think-tank/', 'Think Tank', 'Think Tank', 'Какие научные задачи выбрать до 2030 и 2036 годов: восемь направлений и три варианта.', 'Which research problems to choose for 2030 and 2036: eight fields and three options.'],
-  ['trends/', 'Мировые тренды', 'World trends', 'Куда движется наука о станках: рост мировых тем и наши работы в них.', 'Where machine-tool research is heading: growing world topics and our work in them.'],
-  ['industry-index/', 'Отраслевой индекс', 'Industry index', 'Какую долю мировой станкоинструментальной науки даёт СТАНКИН.', 'STANKIN’s share of world machine-tool research.'],
-  ['competencies/', 'Компетенции', 'Competencies', 'Показатели {n}: объём, специализация, цитирование, место в России и мире.', 'Indicators for {n}: volume, specialisation, citations, rank in Russia and worldwide.'],
-  ['collaboration/', 'Сотрудничество', 'Collaboration', 'С кем публикуемся: страны, организации, промышленность.', 'Who we publish with: countries, organisations, industry.'],
-  ['method/', 'Методика', 'Method', 'Источник данных, формулы, аудит аффилиаций и ограничения выводов.', 'Data source, formulas, affiliation audit and limits of the conclusions.'],
+  ['decisions', 'Где мы сильны, где растёт мир и что соединить для умного станка.', 'Where we are strong, where the world grows and what to connect for a smart machine tool.'],
+  ['pish', 'Что предложить в заявке 2026 года, чем это отличается от действующей школы и при каком условии подавать.', 'What to propose in the 2026 application, how it differs from the existing school and when to apply.'],
+  ['think-tank', 'Какие научные задачи выбрать до 2030 и 2036 годов: восемь направлений и три варианта.', 'Which research problems to choose for 2030 and 2036: eight fields and three options.'],
+  ['trends', 'Куда движется наука о станках: рост мировых тем и наши работы в них.', 'Where machine-tool research is heading: growing world topics and our work in them.'],
+  ['industry-index', 'Какую долю мировой станкоинструментальной науки даёт СТАНКИН.', 'STANKIN’s share of world machine-tool research.'],
+  ['competencies', 'Показатели {n}: объём, специализация, цитирование, место в России и мире.', 'Indicators for {n}: volume, specialisation, citations, rank in Russia and worldwide.'],
+  ['collaboration', 'С кем публикуемся: страны, организации, промышленность.', 'Who we publish with: countries, organisations, industry.'],
+  ['method', 'Источник данных, формулы, аудит аффилиаций и ограничения выводов.', 'Data source, formulas, affiliation audit and limits of the conclusions.'],
 ];
 
 const fieldsCount = (ctx) => {
@@ -27,7 +29,7 @@ const fieldsCount = (ctx) => {
 };
 
 export function siteGuide(ctx, { exclude = [] } = {}) {
-  const rows = GUIDE.filter(([path]) => !exclude.includes(path));
+  const rows = GUIDE.map(([key, qru, qen]) => [`${key}/`, ctx.t.nav[key], ctx.t.nav[key], qru, qen]).filter(([path]) => !exclude.includes(path));
   return `<nav class="site-guide" aria-label="${esc(L(ctx, 'Разделы сайта', 'Site sections'))}">${rows.map(([path, ru, en, qru, qen], i) => `<a class="site-guide-card${path === 'pish/' ? ' site-guide-key' : ''}" href="${esc(ctx.page(path))}"><span class="site-guide-index">${String(i + 1).padStart(2, '0')}</span><strong>${esc(L(ctx, ru, en))}</strong><span>${esc(L(ctx, qru, qen).replace('{n}', fieldsCount(ctx)))}</span></a>`).join('')}</nav>`;
 }
 

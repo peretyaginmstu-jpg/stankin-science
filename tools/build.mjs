@@ -179,15 +179,15 @@ async function main() {
     };
     const t = STRINGS[lang];
     await render('home', '', t.home.title, t.site.description, (ctx) => homePage(ctx));
-    await render('competencies', 'competencies/', t.competencies.title, null, (ctx) => competenciesPage(ctx));
+    await render('competencies', 'competencies/', t.nav.competencies, null, (ctx) => competenciesPage(ctx));
     for (let i = 0; i < visible.length; i += 1) {
       const c = visible[i];
       const def = COMPETENCIES.find((d) => d.id === c.id);
       await render('competency', `competencies/${c.id}/`, def.name[lang], def.summary[lang], (ctx) => competencyPage(ctx, c, { prev: visible[i - 1], next: visible[i + 1] }));
     }
-    await render('trends', 'trends/', t.trends.title, t.trends.lead, (ctx) => trendsPage(ctx));
-    await render('industry-index', 'industry-index/', lang === 'ru' ? 'Отраслевой индекс университета' : 'University industry index', null, industryIndexPage);
-    await render('think-tank', 'think-tank/', lang === 'ru' ? 'Think Tank: научные приоритеты' : 'Think Tank: research priorities', lang === 'ru' ? 'Научные приоритеты СТАНКИН внутри станкоинструментальной отрасли: изменения за пять лет и варианты развития до 2030 и 2036 года.' : 'STANKIN research priorities within the machine-tool industry: five years of change and options towards 2030 and 2036.', thinkTankPage);
+    await render('trends', 'trends/', t.nav.trends, t.trends.lead, (ctx) => trendsPage(ctx));
+    await render('industry-index', 'industry-index/', t.nav['industry-index'], null, industryIndexPage);
+    await render('think-tank', 'think-tank/', t.nav['think-tank'], lang === 'ru' ? 'Научные приоритеты СТАНКИН внутри станкоинструментальной отрасли: изменения за пять лет и варианты развития до 2030 и 2036 года.' : 'STANKIN research priorities within the machine-tool industry: five years of change and options towards 2030 and 2036.', thinkTankPage);
     await render('decisions', 'decisions/', t.nav.decisions, t.site.description, decisionsPage);
     await render('pish', 'pish/', t.nav.pish, lang === 'ru' ? 'Какую новую ПИШ предложить СТАНКИН: что показывают исследования, что требуется по конкурсу и какой продукт нужен заказчику.' : 'Choosing a new STANKIN engineering school: what research shows, what the competition requires and what product the customer needs.', pishPage);
     const diagramCtx = makeContext({ lang, model, competencies: COMPETENCIES, taxonomyRu: TAXONOMY, route: 'pish', pageDir: prefix + 'pish/', site: SITE, institution: INSTITUTION });
@@ -208,8 +208,8 @@ async function main() {
     for (const [key,renderer] of [['landscape',pishTopicLandscape],['tree',pishTopicTree],['paths',pishResearchPaths]]) {
       await write(`data/pish-${key}-${lang}.svg`, renderer(absoluteLinks(agendaSpecs[key]),1160,{standalone:true}));
     }
-    await render('collaboration', 'collaboration/', t.collaboration.title, t.collaboration.lead, (ctx) => collaborationPage(ctx));
-    await render('method', 'method/', t.method.title, t.method.lead, (ctx) => methodPage(ctx, { competencies: COMPETENCIES }));
+    await render('collaboration', 'collaboration/', t.nav.collaboration, t.collaboration.lead, (ctx) => collaborationPage(ctx));
+    await render('method', 'method/', t.nav.method, t.method.lead, (ctx) => methodPage(ctx, { competencies: COMPETENCIES }));
   }
 
   // 404: GitHub Pages отдаёт этот файл по любому неизвестному адресу, поэтому ссылки в нём абсолютные.

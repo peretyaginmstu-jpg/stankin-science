@@ -63,6 +63,8 @@ export function makeContext({ lang, model, competencies, taxonomyRu, route, page
     worksWord: (n) => (lang === 'ru' ? F.plural('ru', n, ['публикация', 'публикации', 'публикаций']) : n === 1 ? 'publication' : 'publications'),
   };
   ctx.worksN = (n) => `${ctx.int(n)} ${ctx.worksWord(n)}`;
+  // Заголовок раздела: название из меню и, если задано, уточнение после двоеточия.
+  ctx.sectionTitle = (key) => (t.navHeading?.[key] ? `${t.nav[key]}: ${t.navHeading[key]}` : t.nav[key]);
   // Число с согласованным существительным: ctx.count(17, FORMS.topics) → «17 тем» / «17 topics».
   ctx.count = (n, forms) => `${ctx.int(n)} ${lang === 'ru' ? F.plural('ru', n, forms.ru) : n === 1 ? forms.en[0] : forms.en[1]}`;
   return ctx;

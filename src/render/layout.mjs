@@ -3,19 +3,21 @@
 import { esc, rel, langPrefix } from './kit.mjs';
 import { LANGS } from '../../content/i18n.mjs';
 
+// Порядок разделов совпадает с карточками «Что где смотреть» на главной (src/render/guide.mjs).
 const NAV = [
   ['home', ''],
   ['decisions', 'decisions/'],
-  ['think-tank', 'think-tank/'],
   ['pish', 'pish/'],
-  ['competencies', 'competencies/'],
+  ['think-tank', 'think-tank/'],
   ['trends', 'trends/'],
+  ['competencies', 'competencies/'],
   ['collaboration', 'collaboration/'],
   ['method', 'method/'],
 ];
 
 // Подвал: все разделы, включая отраслевой индекс (в шапке он открывается из «Мировых трендов»).
-const FOOTER_NAV = [...NAV.slice(0, 6), ['industry-index', 'industry-index/'], ...NAV.slice(6)];
+const TRENDS_AT = NAV.findIndex(([key]) => key === 'trends') + 1;
+const FOOTER_NAV = [...NAV.slice(0, TRENDS_AT), ['industry-index', 'industry-index/'], ...NAV.slice(TRENDS_AT)];
 
 const LOGO = {
   ru: { src: 'assets/img/stankin-official-white.svg', w: 150, h: 45 },
