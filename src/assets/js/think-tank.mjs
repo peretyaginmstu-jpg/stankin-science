@@ -82,7 +82,7 @@ export async function initThinkTank(root){
  try{
   const response=await fetch(localUrl(root.dataset.source),{credentials:'same-origin'});if(!response.ok)throw new Error(`Think Tank data HTTP ${response.status}`);
   data=await response.json();if(data.schema!==1||!Array.isArray(data.directions)||data.checks?.some(c=>!c.passed))throw new Error('Think Tank validation failed');
-  if(data.scenarios?.length)selectScenario(data.scenarios.find(x=>x.id==='connections')?.id??data.scenarios[0].id);
+  if(data.scenarios?.length)selectScenario(activeScenario??data.scenarios.find(x=>x.id==='connections')?.id??data.scenarios[0].id);
   await loadLibrary(localUrl(root.dataset.echarts));
   if(!window.echarts)throw new Error('Chart library unavailable');
   chartHost.hidden=false;chart=window.echarts.init(chartHost,null,{renderer:'canvas'});controls.hidden=false;staticHost.hidden=true;
