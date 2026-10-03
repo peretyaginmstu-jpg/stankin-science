@@ -1,6 +1,7 @@
 // Поведение страниц: меню, перерисовка графиков под ширину блока, подсказки, сортировка таблиц.
 // Без JavaScript сайт остаётся рабочим: графики нарисованы при сборке, данные есть в таблицах.
 
+import { initWorldTrends } from './world-trends.mjs';
 import { initExplorer } from './explorer.mjs';
 import { RENDERERS } from './charts/charts.mjs';
 import { strategyMatrix, capabilityHeatmap } from './charts/strategy.mjs';
@@ -394,4 +395,11 @@ for (const root of document.querySelectorAll('[data-explorer]')) {
     }, {rootMargin:'300px'});
     observer.observe(root);
   } else initExplorer(root);
+}
+
+for (const root of document.querySelectorAll("[data-world-trends]")) {
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(entries => { if (entries.some(entry => entry.isIntersecting)) { observer.disconnect(); initWorldTrends(root); } }, {rootMargin:"300px"});
+    observer.observe(root);
+  } else initWorldTrends(root);
 }

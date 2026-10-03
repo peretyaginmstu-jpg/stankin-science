@@ -63,6 +63,11 @@ async function main() {
   if (explorer.schema !== 1 || explorer.totalWorks !== pish.totalWorks || explorer.fetchedAt !== pish.fetchedAt) fail('Интерактивная карта относится к другому снимку данных.');
   if (!explorer.checks?.length) fail('Нет численного аудита интерактивной карты.');
   else for (const check of explorer.checks) if (!check.passed) fail(`Не сошлась проверка интерактивной карты: ${check.id}`);
+  for (const name of ['world-trends','industry-index']) {
+    const data = JSON.parse(await readFile(path.join(dir,`data/${name}.json`),'utf8'));
+    if (data.schema !== 1 || data.totalWorks !== pish.totalWorks || data.fetchedAt !== pish.fetchedAt) fail(`Другой корпус: ${name}`);
+    if (!data.checks?.length || data.checks.some(check=>!check.passed)) fail(`Ошибка численного аудита: ${name}`);
+  }
   const vendorDir = path.join(dir,'assets/vendor/echarts');
   const vendor = JSON.parse(await readFile(path.join(vendorDir,'metadata.json'),'utf8'));
   if (vendor.name !== 'echarts' || vendor.license !== 'Apache-2.0' || !vendor.version || !vendor.files?.length) fail('Нет сведений о происхождении Apache ECharts.');

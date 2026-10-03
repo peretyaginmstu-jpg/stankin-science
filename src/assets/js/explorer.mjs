@@ -3,7 +3,7 @@ let libraryPromise;
 const node = (tag, cls, value) => { const el=document.createElement(tag); if(cls)el.className=cls; if(value!=null)el.textContent=value; return el; };
 const finite = Number.isFinite;
 function localUrl(value) { const url=new URL(value,location.href); if(url.origin!==location.origin)throw new Error('Non-local explorer resource'); return url.href; }
-function loadLibrary(url) {
+export function loadLibrary(url) {
   if(window.echarts) return Promise.resolve(window.echarts);
   if(!libraryPromise) libraryPromise=new Promise((resolve,reject)=>{
     const script=document.createElement('script');script.src=localUrl(url);script.async=true;
@@ -134,7 +134,7 @@ export async function initExplorer(root) {
     if(data.schema!==1||!Array.isArray(data.groups)||!Array.isArray(data.topics)||!data.checks?.length||data.checks.some(c=>!c.passed))throw new Error('Invalid explorer audit');
     chartHost.hidden=annualHost.hidden=false;
     chart=lib.init(chartHost,null,{renderer:'canvas'});annual=lib.init(annualHost,null,{renderer:'canvas'});
-    controls.hidden=false;fillChoices(root.dataset.initial);draw();
+    controls.hidden=false;fillChoices(new URLSearchParams(location.search).get('topic') || root.dataset.initial);draw();
     level.addEventListener('change',()=>{page=0;fillChoices(level.value==='groups'?'machining':root.dataset.initial);draw();});
     for(const select of [mode,period,choice])select.addEventListener('change',()=>{page=0;draw();});
     chart.on('click',params=>{if(params.componentType!=='series'||!params.data?.id)return;choice.value=params.data.id;page=0;draw();});

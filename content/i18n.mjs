@@ -198,7 +198,7 @@ export const STRINGS = {
       noPartners: 'Совместных публикаций с зарубежными организациями по направлению нет.',
     },
     trends: {
-      title: 'Мировые тренды и белые пятна',
+      title: 'Куда движется наука о станках',
       lead: 'Как меняется мировой поток публикаций в областях компетенций университета, где университет растёт быстрее мира и какие быстрорастущие темы он пока не затрагивает.',
       portfolioTitle: 'Портфель компетенций',
       portfolioLead: 'По горизонтали — рост мирового потока публикаций направления (второй период к первому), по вертикали — индекс специализации университета. Вертикальная линия — рост мировой науки в целом.',
@@ -477,7 +477,7 @@ export const STRINGS = {
       noPartners: 'There are no joint papers with institutions abroad in this area.',
     },
     trends: {
-      title: 'World trends and white spots',
+      title: 'Where machine-tool research is heading',
       lead: 'How world output is changing in the university’s competency areas, where the university grows faster than the world, and which fast-growing topics it does not yet cover.',
       portfolioTitle: 'Competency portfolio',
       portfolioLead: 'The horizontal axis shows growth of world output in the area (second period vs first); the vertical axis shows the university’s specialisation index. The vertical line marks the growth of world science overall.',

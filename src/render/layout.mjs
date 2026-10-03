@@ -33,7 +33,7 @@ const CSP = [
 export function layout(ctx, { title, description, body, routeKey, routePath, demo = false }) {
   const { t, lang } = ctx;
   const versionedAsset = (file) => `${ctx.asset(file)}${ctx.model.meta.assetVersion ? `?v=${ctx.model.meta.assetVersion}` : ''}`;
-  const navCurrent = routeKey === 'competency' ? 'competencies' : routeKey;
+  const navCurrent = routeKey === 'competency' ? 'competencies' : routeKey === 'industry-index' ? 'trends' : routeKey;
   const fullTitle = routeKey === 'home' ? t.site.full : `${title} — ${t.site.full}`;
   const logo = LOGO[lang] ?? LOGO.ru;
   const nav = NAV.map(([key, path]) => {
@@ -72,6 +72,7 @@ ${alternates}
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/strategy.css'))}">
 ${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/pish.css'))}">` : ''}
 ${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/explorer.css'))}">` : ''}
+${routeKey === 'trends' || routeKey === 'industry-index' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/world-trends.css'))}">` : ''}
 <script type="module" src="${esc(versionedAsset('assets/js/site.mjs'))}"></script>
 </head>
 <body class="page-${esc(routeKey)}">
