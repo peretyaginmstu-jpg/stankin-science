@@ -6,8 +6,8 @@ export async function initThinkTank(root){
  if(root.dataset.initialized)return;
  root.dataset.initialized='true';
  const en=root.dataset.lang==='en',lang=en?'en':'ru',L=(ru,eng)=>en?eng:ru,T=x=>typeof x==='string'?x:x?.[lang]??'';
- const num=(x,d=0)=>finite(x)?new Intl.NumberFormat(en?'en':'ru',{maximumFractionDigits:d}).format(x):'—';
- const pct=x=>finite(x)?`${x>0?'+':''}${num(x*100,1)}%`:'—';
+ const num=(x,d=0)=>finite(x)?new Intl.NumberFormat(en?'en':'ru',{minimumFractionDigits:d,maximumFractionDigits:d}).format(x).replace(/^-/,'−'):'—';
+ const pct=x=>{if(!finite(x))return '—';const r=Math.round(x*1000)/10;return `${r>0?'+':''}${num(r,1)}${en?'%':'\u00a0%'}`;};
  const status=root.querySelector('[data-tt-status]'),chartHost=root.querySelector('[data-tt-chart]'),staticHost=root.querySelector('[data-tt-static]'),controls=root.querySelector('[data-tt-controls]'),filter=root.querySelector('[data-tt-filter]'),choice=root.querySelector('[data-tt-choice]'),detail=root.querySelector('[data-tt-selected]');
  let data,chart,resizeTimer,lastWidth=0,printState=null,activeScenario=null;
  const projector=root.querySelector('[data-tt-projector]'),print=root.querySelector('[data-tt-print]');
@@ -43,11 +43,11 @@ export async function initThinkTank(root){
   const metrics=[
    [L('Работы: два пятилетия','Works: two periods'),`${num(old.n)} → ${num(c.n)}`],
    [L('Мировая доля темы: изменение','Topic world share change'),pct(d.evidence?.worldShareChange)],
-   ['FWCI · 2021–2025',num(c.fwci,3)],
-   [L('Условный 95% интервал','Conditional 95% interval'),finite(ci?.lower)&&finite(ci?.upper)?`${num(ci.lower,3)} … ${num(ci.upper,3)}`:'—'],
-   [L('FWCI без максимальной работы','FWCI without the highest paper'),num(c.fwciWithoutHighest,3)],
-   [L('Медиана FWCI','Median FWCI'),num(c.fwciMedian,3)],
-   [L('Доля работ в top 10%','Top-10% share'),finite(c.top10)?`${num(c.top10*100,1)}%`:'—'],
+   ['FWCI · 2021–2025',num(c.fwci,2)],
+   [L('Условный 95% интервал','Conditional 95% interval'),finite(ci?.lower)&&finite(ci?.upper)?`${num(ci.lower,2)} … ${num(ci.upper,2)}`:'—'],
+   [L('FWCI без максимальной работы','FWCI without the highest paper'),num(c.fwciWithoutHighest,2)],
+   [L('Медиана FWCI','Median FWCI'),num(c.fwciMedian,2)],
+   [L('Доля работ в топ-10 %','Top-10% share'),finite(c.top10)?`${num(c.top10*100,1)}${en?'%':'\u00a0%'}`:'—'],
    [L('Известный FWCI / работы','Known FWCI / works'),`${num(c.fwciN)} / ${num(c.n)}`],
   ];
   for(const [label,value] of metrics){const row=el('div');row.append(el('dt','',label),el('dd','',value));dl.append(row);}detail.append(dl);
@@ -70,7 +70,7 @@ export async function initThinkTank(root){
   const intervals=list.filter(d=>finite(cohort(d).fwciCI95?.lower)&&finite(cohort(d).fwciCI95?.upper)).map(d=>[d.evidence.worldShareChange*100,cohort(d).fwciCI95.lower,cohort(d).fwciCI95.upper]);
   chart.setOption({animation:false,backgroundColor:'#fff',textStyle:{fontFamily:'Arial, sans-serif'},grid:{left:mobile?50:70,right:mobile?18:38,top:42,bottom:mobile?73:60},
    title:{text:L('Рост мировой доли × влияние работ СТАНКИН','World-share growth × STANKIN citation impact'),left:mobile?6:20,top:3,textStyle:{fontSize:mobile?12:16,fontWeight:500}},
-   tooltip:{trigger:'item',renderMode:'richText',confine:true,formatter:p=>p.seriesType==='scatter'?`${p.data.number}. ${p.name}\n${L('Мировая доля','World share')}: ${pct(p.value[0]/100)}\nFWCI: ${num(p.value[1],3)} · n = ${num(p.value[2])}`:''},
+   tooltip:{trigger:'item',renderMode:'richText',confine:true,formatter:p=>p.seriesType==='scatter'?`${p.data.number}. ${p.name}\n${L('Мировая доля','World share')}: ${pct(p.value[0]/100)}\nFWCI: ${num(p.value[1],2)} · n = ${num(p.value[2])}`:''},
    xAxis:{type:'value',min:xmin,max:xmax,name:L('Мировая доля: изменение, %','World-share change, %'),nameLocation:'middle',nameGap:mobile?47:35,nameTextStyle:{fontSize:mobile?10:12},axisLabel:{fontSize:mobile?10:11,formatter:v=>num(v,0)},splitLine:{lineStyle:{color:'#e7edf0'}}},
    yAxis:{type:'value',min:0,max:ymax,name:'FWCI',nameLocation:'middle',nameRotate:90,nameGap:mobile?36:45,nameTextStyle:{fontSize:12},axisLabel:{fontSize:11,formatter:v=>num(v,1)},splitLine:{lineStyle:{color:'#e7edf0'}}},
    series:[{type:'custom',name:'interval',silent:true,z:1,data:intervals,renderItem:(params,api)=>{const a=api.coord([api.value(0),api.value(1)]),b=api.coord([api.value(0),api.value(2)]);return {type:'group',children:[{type:'line',shape:{x1:a[0],y1:a[1],x2:b[0],y2:b[1]},style:{stroke:'#9babb5',lineWidth:1.5}},{type:'line',shape:{x1:a[0]-4,y1:a[1],x2:a[0]+4,y2:a[1]},style:{stroke:'#9babb5',lineWidth:1.5}},{type:'line',shape:{x1:b[0]-4,y1:b[1],x2:b[0]+4,y2:b[1]},style:{stroke:'#9babb5',lineWidth:1.5}}]};}},

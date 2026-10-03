@@ -16,14 +16,19 @@ const GUIDE = [
   ['think-tank/', 'Think Tank', 'Think Tank', 'Какие научные задачи выбрать до 2030 и 2036 годов: восемь направлений и три варианта.', 'Which research problems to choose for 2030 and 2036: eight fields and three options.'],
   ['trends/', 'Мировые тренды', 'World trends', 'Куда движется наука о станках: рост мировых тем и наши работы в них.', 'Where machine-tool research is heading: growing world topics and our work in them.'],
   ['industry-index/', 'Отраслевой индекс', 'Industry index', 'Какую долю мировой станкоинструментальной науки даёт СТАНКИН.', 'STANKIN’s share of world machine-tool research.'],
-  ['competencies/', 'Компетенции', 'Competencies', 'Показатели 18 направлений: объём, специализация, цитирование, место в России и мире.', 'Indicators for 18 fields: volume, specialisation, citations, rank in Russia and worldwide.'],
+  ['competencies/', 'Компетенции', 'Competencies', 'Показатели {n}: объём, специализация, цитирование, место в России и мире.', 'Indicators for {n}: volume, specialisation, citations, rank in Russia and worldwide.'],
   ['collaboration/', 'Сотрудничество', 'Collaboration', 'С кем публикуемся: страны, организации, промышленность.', 'Who we publish with: countries, organisations, industry.'],
   ['method/', 'Методика', 'Method', 'Источник данных, формулы, аудит аффилиаций и ограничения выводов.', 'Data source, formulas, affiliation audit and limits of the conclusions.'],
 ];
 
+const fieldsCount = (ctx) => {
+  const n = ctx.model.competencies.filter((c) => c.visible).length;
+  return ctx.lang === 'ru' ? `${n} ${ctx.plural(n, ['направления', 'направлений', 'направлений'])}` : `${n} ${n === 1 ? 'field' : 'fields'}`;
+};
+
 export function siteGuide(ctx, { exclude = [] } = {}) {
   const rows = GUIDE.filter(([path]) => !exclude.includes(path));
-  return `<nav class="site-guide" aria-label="${esc(L(ctx, 'Разделы сайта', 'Site sections'))}">${rows.map(([path, ru, en, qru, qen], i) => `<a class="site-guide-card${path === 'pish/' ? ' site-guide-key' : ''}" href="${esc(ctx.page(path))}"><span class="site-guide-index">${String(i + 1).padStart(2, '0')}</span><strong>${esc(L(ctx, ru, en))}</strong><span>${esc(L(ctx, qru, qen))}</span></a>`).join('')}</nav>`;
+  return `<nav class="site-guide" aria-label="${esc(L(ctx, 'Разделы сайта', 'Site sections'))}">${rows.map(([path, ru, en, qru, qen], i) => `<a class="site-guide-card${path === 'pish/' ? ' site-guide-key' : ''}" href="${esc(ctx.page(path))}"><span class="site-guide-index">${String(i + 1).padStart(2, '0')}</span><strong>${esc(L(ctx, ru, en))}</strong><span>${esc(L(ctx, qru, qen).replace('{n}', fieldsCount(ctx)))}</span></a>`).join('')}</nav>`;
 }
 
 // Where a competency sits in the recommended bet; empty for unrelated fields.

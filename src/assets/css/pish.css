@@ -316,3 +316,23 @@ body.pish-projector .pish-section .chart{padding:24px}
 @media(max-width:760px){.pish-bet-hero{grid-template-columns:1fr;padding:19px}.pish-bet-hero dl{border-left:0;padding-left:0;border-top:1px solid var(--header-line);padding-top:16px}.pish-bet-reasons,.pish-bet-condition,.pish-continuity-lanes{grid-template-columns:1fr}.pish-subhead{font-size:19px!important}.pish-hero-steps li{font-size:15px;padding:8px 22px 8px 12px}}
 @media print{.pish-bet{background:none}.pish-bet-hero{background:#f3efe6;color:#252420}.pish-bet-hero h3,.pish-bet-hero p,.pish-bet-hero dd{color:#252420}.pish-bet-hero .eyebrow,.pish-bet-hero dt{color:#4b4943}.pish-bet-reasons li,.pish-bet-condition>div{break-inside:avoid}.pish-bet-reasons p,.pish-bet-condition p,.pish-bet-lead{font-size:9px}.pish-options table,.pish-raci-table{min-width:0;font-size:8px}.pish-hero-steps li{background:#fff;color:#252420;border-color:#d9d4c8}.pish-hero-steps li:last-child{background:#2f6db5;color:#fff}}
 body.pish-projector .pish-bet-reasons p,body.pish-projector .pish-bet-condition p,body.pish-projector .pish-bet-lead{font-size:16px}
+
+/* прочность научной опоры ставки */
+.pish-evidence-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 22px}
+@media (max-width:980px){.pish-evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.pish-evidence-grid{grid-template-columns:1fr}}
+.pish-evidence-card{padding:16px 18px;border:1px solid var(--line);border-top:3px solid var(--context);border-radius:var(--radius);background:var(--surface)}
+.pish-evidence-card h4{margin:0 0 8px;font-size:15.5px;line-height:1.3}
+.pish-evidence-card p{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2,var(--ink))}
+.pish-evidence-ok{border-top-color:#2b7e75}
+.pish-evidence-warn{border-top-color:var(--accent)}
+.pish-evidence-info{border-top-color:var(--cool)}
+table.pish-evidence-table tr.pish-evidence-total>*{background:var(--sunken)}
+
+.pish-glossary{margin-top:14px}
+.pish-glossary details{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:12px 18px}
+.pish-glossary summary{cursor:pointer;font-weight:600;font-size:14.5px}
+.pish-glossary dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px 26px;margin:14px 0 4px}
+.pish-glossary dt{font-weight:700;font-size:13.5px}
+.pish-glossary dd{margin:2px 0 0;font-size:13.5px;line-height:1.45;color:var(--muted)}
+@media print{.pish-glossary details{display:block}}

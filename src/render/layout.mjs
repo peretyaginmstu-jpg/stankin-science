@@ -14,6 +14,9 @@ const NAV = [
   ['method', 'method/'],
 ];
 
+// Подвал: все разделы, включая отраслевой индекс (в шапке он открывается из «Мировых трендов»).
+const FOOTER_NAV = [...NAV.slice(0, 6), ['industry-index', 'industry-index/'], ...NAV.slice(6)];
+
 const LOGO = {
   ru: { src: 'assets/img/stankin-official-white.svg', w: 150, h: 45 },
   en: { src: 'assets/img/stankin-official-white-en.svg', w: 140, h: 45 },
@@ -107,7 +110,7 @@ ${body}
     </div>
     <div>
       <p class="footer-label">${esc(t.footer.sections)}</p>
-      ${NAV.map(([key, path]) => `<a href="${esc(ctx.page(path))}">${esc(t.nav[key])}</a>`).join('')}
+      ${FOOTER_NAV.map(([key, path]) => `<a href="${esc(ctx.page(path))}">${esc(t.nav[key])}</a>`).join('')}
     </div>
     <div>
       <p class="footer-label">${esc(t.footer.links)}</p>

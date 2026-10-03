@@ -103,9 +103,20 @@ export function bubble(spec, width = 880) {
   const m = { l: compact ? 36 : 48, r: compact ? 10 : 18, t: compact ? 34 : 36, b: compact ? 44 : 48 };
   const pw = w - m.l - m.r;
   const ph = h - m.t - m.b;
-  const pts = spec.points.filter((p) => p.x != null && p.y != null && p.x > 0);
+  // Точки правее spec.x.max (только логарифмическая шкала) выносятся в полосу «вне шкалы» справа:
+  // один выброс не должен сжимать остальные точки. Настоящее значение остаётся в подписи и подсказке.
+  const cap = spec.x.type === 'log' && Number.isFinite(spec.x.max) ? spec.x.max : null;
+  const pts = spec.points.filter((p) => p.x != null && p.y != null && p.x > 0)
+    .map((p) => (cap != null && p.x > cap ? { ...p, x: cap * Math.SQRT2, off: p.x } : p));
+  const anyOff = pts.some((p) => p.off != null);
   const make = (axis, values) => (axis.type === 'log' ? logScale(values, { ref: axis.ref ?? 1, pad: 1.25 }) : linearScale(values, { ref: axis.ref, zero: axis.zero ?? true, pad: 0.12 }));
-  const xs = make(spec.x, pts.map((p) => p.x));
+  let xs = make(spec.x, pts.map((p) => (p.off != null ? cap : p.x)));
+  if (anyOff) {
+    const lo = xs.lo;
+    const hi = cap * 2;
+    const L = Math.log2;
+    xs = { type: 'log', lo, hi, ticks: xs.ticks.filter((t) => t <= cap), map: (v, a, b) => a + ((L(Math.max(v, lo)) - L(lo)) / (L(hi) - L(lo))) * (b - a) };
+  }
   const ys = make(spec.y, pts.map((p) => p.y));
   const X = (v) => xs.map(v, m.l, m.l + pw);
   const Y = (v) => ys.map(v, m.t + ph, m.t);
@@ -119,9 +130,15 @@ export function bubble(spec, width = 880) {
   out.push('<g class="grid">');
   for (const t of ys.ticks) out.push(`<line x1="${m.l}" x2="${m.l + pw}" y1="${r1(Y(t))}" y2="${r1(Y(t))}"/>`);
   for (const t of xTicks) out.push(`<line x1="${r1(X(t))}" x2="${r1(X(t))}" y1="${m.t}" y2="${m.t + ph}"/>`);
-  out.push('</g><g class="axis-text">');
+  out.push('</g>');
+  if (anyOff) {
+    const bx = X(cap);
+    out.push(`<g class="offscale"><rect x="${r1(bx)}" y="${m.t}" width="${r1(m.l + pw - bx)}" height="${ph}"/><path d="M${r1(bx - 4)},${m.t + ph + 4}l4,-8M${r1(bx)},${m.t + ph + 4}l4,-8"/></g>`);
+  }
+  out.push('<g class="axis-text">');
   for (const t of ys.ticks) out.push(`<text x="${m.l - 6}" y="${r1(Y(t) + 4)}" text-anchor="end">${esc(tickText(spec.lang, t, spec.y.kind))}</text>`);
   for (const t of xTicks) out.push(`<text x="${r1(X(t))}" y="${m.t + ph + 16}" text-anchor="middle">${esc(tickText(spec.lang, t, spec.x.kind))}</text>`);
+  if (anyOff) out.push(`<text x="${r1((X(cap) + m.l + pw) / 2)}" y="${m.t + ph + 16}" text-anchor="middle">${esc(`> ${tickText(spec.lang, cap, spec.x.kind)}`)}</text>`);
   out.push(`<text class="axis-title" x="${m.l + pw}" y="${h - 8}" text-anchor="end">${esc(compact ? spec.x.short ?? spec.x.label : spec.x.label)}</text>`);
   out.push(`<text class="axis-title" x="${m.l - (compact ? 30 : 40)}" y="${m.t - 16}" text-anchor="start">${esc(compact ? spec.y.short ?? spec.y.label : spec.y.label)}</text>`);
   out.push('</g>');
@@ -173,7 +190,7 @@ export function bubble(spec, width = 880) {
     const open = p.href ? `<a class="pt" href="${esc(p.href)}"${tipAttr(p.tip)} aria-label="${esc(p.aria ?? p.label)}">` : `<g class="pt" tabindex="0"${tipAttr(p.tip)} aria-label="${esc(p.aria ?? p.label)}">`;
     out.push(open);
     out.push(`<circle class="hit" cx="${r1(p.cx)}" cy="${r1(p.cy)}" r="${r1(hit)}"/>`);
-    out.push(`<circle class="dot ${p.tone === 'context' ? 'm-context' : 'm-accent'}" cx="${r1(p.cx)}" cy="${r1(p.cy)}" r="${r1(p.r)}"/>`);
+    out.push(`<circle class="dot ${p.tone === 'context' ? 'm-context' : 'm-accent'}${p.hollow ? ' dot-hollow' : ''}" cx="${r1(p.cx)}" cy="${r1(p.cy)}" r="${r1(p.r)}"/>`);
     out.push(p.href ? '</a>' : '</g>');
   }
   out.push('</g>');
@@ -186,14 +203,19 @@ export function bubble(spec, width = 880) {
   const numbers = bubbleNumbers(spec.points);
   const inside = [];
   for (const p of [...placed].sort((a, b) => b.r - a.r)) {
-    const text = compact ? String(numbers.get(p.id) ?? '') : p.label;
-    const tw = textWidth(text, fs);
-    const th = fs * 1.25;
+    // точке вне шкалы сначала пробуем полную подпись со значением, затем — только значение
+    const variants = compact ? [String(numbers.get(p.id) ?? '')]
+      : p.off != null ? [`${p.label} · ${tickText(spec.lang, p.off, spec.x.kind)}`, tickText(spec.lang, p.off, spec.x.kind)] : [p.label];
     if (compact && p.r >= 9) {
-      inside.push(`<text x="${r1(p.cx)}" y="${r1(p.cy + fs * 0.36)}" text-anchor="middle">${esc(text)}</text>`);
+      inside.push(`<text x="${r1(p.cx)}" y="${r1(p.cy + fs * 0.36)}" text-anchor="middle">${esc(variants[0])}</text>`);
       continue;
     }
     let ok = null;
+    let text = variants[0];
+    for (const variant of variants) {
+    text = variant;
+    const tw = textWidth(text, fs);
+    const th = fs * 1.25;
     for (const gap of [5, 20]) {
       for (const deg of ANGLES) {
         const rad = (deg * Math.PI) / 180;
@@ -215,6 +237,8 @@ export function bubble(spec, width = 880) {
         }
       }
       if (ok) break;
+    }
+    if (ok) break;
     }
     if (!ok) continue;
     boxes.push(ok.box);
@@ -443,4 +467,78 @@ export function sparkline(values, { w = 112, h = 30 } = {}) {
   return `<svg class="micro spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><path class="line m-context" d="${d}"/><circle class="end m-accent" cx="${r1(X(n - 1))}" cy="${r1(Y(vals[n - 1]))}" r="3"/></svg>`;
 }
 
-export const RENDERERS = { bubble, lines, columns, hbars };
+// ---------- прочность среднего: среднее с интервалом, медиана и подгруппа -------------------
+
+// spec: { lang, label, ref: 1, cap: 3, markers: { mean, median, led }, groups: { key: title },
+//         rows: [{ id, group, label, sub, mean, lo, hi, median, led, href, tip }] }
+// Одна шкала FWCI для всех строк; значения правее cap прижимаются к краю и подписываются числом.
+export function evidence(spec, width = 880) {
+  const w = Math.max(300, Math.round(width));
+  const compact = w < 600;
+  const fs = compact ? 11.5 : 12.5;
+  const rowH = compact ? 40 : 34;
+  const headH = 28;
+  const labelW = Math.round(compact ? Math.min(150, w * 0.42) : Math.min(300, w * 0.3));
+  const x0 = labelW + 14;
+  const x1 = w - (compact ? 14 : 24);
+  const values = spec.rows.flatMap((r) => [r.mean, r.hi, r.median, r.led]).filter((v) => v != null && Number.isFinite(v));
+  const cap = spec.cap ?? 3;
+  const hi = Math.min(cap, Math.max(spec.ref ?? 1, ...values) * 1.08);
+  const step = hi > 2 ? 0.5 : 0.25;
+  const top = Math.ceil(hi / step) * step;
+  const X = (v) => x0 + (Math.min(Math.max(v, 0), top) / top) * (x1 - x0);
+  const groups = [];
+  for (const r of spec.rows) if (!groups.includes(r.group)) groups.push(r.group);
+  const axisH = 34;
+  const h = 10 + groups.length * headH + spec.rows.length * rowH + axisH;
+  const out = [svgOpen(w, h, spec.label, 'chart-evidence')];
+  const plotTop = 6;
+  const plotBottom = h - axisH + 4;
+  out.push('<g class="grid">');
+  const ticks = [];
+  for (let v = 0; v <= top + 1e-9; v += step) ticks.push(Math.round(v * 100) / 100);
+  for (const t of ticks) out.push(`<line x1="${r1(X(t))}" x2="${r1(X(t))}" y1="${plotTop}" y2="${plotBottom}"/>`);
+  out.push('</g>');
+  if (spec.ref != null) out.push(`<g class="ref"><line x1="${r1(X(spec.ref))}" x2="${r1(X(spec.ref))}" y1="${plotTop}" y2="${plotBottom}"/></g>`);
+  out.push('<g class="axis-text">');
+  const every = compact && ticks.length > 7 ? 2 : 1;
+  ticks.forEach((t, i) => { if (i % every === 0) out.push(`<text x="${r1(X(t))}" y="${plotBottom + 16}" text-anchor="middle">${esc(tickText(spec.lang, t))}</text>`); });
+  if (spec.axis) out.push(`<text class="axis-title" x="${x1}" y="${h - 2}" text-anchor="end">${esc(spec.axis)}</text>`);
+  out.push('</g>');
+  let y = 10;
+  const fmt = (v) => (v == null || !Number.isFinite(v) ? '—' : dec(spec.lang, v, 2));
+  for (const g of groups) {
+    out.push(`<text class="ev-group" x="0" y="${r1(y + headH * 0.62)}" font-size="${compact ? 10.5 : 11}">${esc(spec.groups?.[g] ?? g)}</text>`);
+    out.push(`<line class="ev-rule" x1="0" x2="${w}" y1="${r1(y + headH - 4)}" y2="${r1(y + headH - 4)}"/>`);
+    y += headH;
+    for (const r of spec.rows.filter((x) => x.group === g)) {
+      const cy = y + rowH / 2;
+      const open = r.href ? `<a class="ev-row" href="${esc(r.href)}"${tipAttr(r.tip)}>` : `<g class="ev-row" tabindex="0"${tipAttr(r.tip)}>`;
+      out.push(open);
+      out.push(`<rect class="hit" x="0" y="${r1(y)}" width="${w}" height="${rowH}"/>`);
+      const maxChars = Math.floor(labelW / (fs * CHAR));
+      const label = truncate(r.label, Math.max(8, maxChars));
+      out.push(`<text class="row-label${r.strong ? ' strong' : ''}" x="0" y="${r1(cy - (r.sub ? 2 : -4))}" font-size="${fs}">${esc(label)}</text>`);
+      if (r.sub) out.push(`<text class="row-sub" x="0" y="${r1(cy + 11)}" font-size="${compact ? 10 : 10.5}">${esc(r.sub)}</text>`);
+      if (r.lo != null && r.hi != null) {
+        out.push(`<line class="ev-ci" x1="${r1(X(r.lo))}" x2="${r1(X(r.hi))}" y1="${r1(cy)}" y2="${r1(cy)}"/>`);
+        for (const v of [r.lo, r.hi]) if (v <= top) out.push(`<line class="ev-ci" x1="${r1(X(v))}" x2="${r1(X(v))}" y1="${r1(cy - 5)}" y2="${r1(cy + 5)}"/>`);
+      }
+      if (r.median != null) {
+        const mx = X(r.median);
+        out.push(`<path class="ev-median" d="M${r1(mx)},${r1(cy - 6)}L${r1(mx + 6)},${r1(cy)}L${r1(mx)},${r1(cy + 6)}L${r1(mx - 6)},${r1(cy)}Z"/>`);
+      }
+      if (r.led != null) out.push(`<rect class="ev-led" x="${r1(X(r.led) - 5)}" y="${r1(cy - 5)}" width="10" height="10"/>`);
+      if (r.mean != null) out.push(`<circle class="ev-mean" cx="${r1(X(r.mean))}" cy="${r1(cy)}" r="6"/>`);
+      // значения за краем шкалы — числом у правого края
+      const over = [[r.hi, ''], [r.led, '□ '], [r.mean, '● ']].filter(([v]) => v != null && v > top);
+      if (over.length) out.push(`<text class="ev-over" x="${x1}" y="${r1(cy - 9)}" text-anchor="end" font-size="10.5">${esc(over.map(([v, m]) => `${m}${fmt(v)} →`).join(' '))}</text>`);
+      out.push(r.href ? '</a>' : '</g>');
+      y += rowH;
+    }
+  }
+  out.push('</svg>');
+  return out.join('');
+}
+
+export const RENDERERS = { bubble, lines, columns, hbars, evidence };

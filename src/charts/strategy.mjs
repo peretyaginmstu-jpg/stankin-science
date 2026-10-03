@@ -16,10 +16,16 @@ const shortText = (value, max) => {
   return `${(space > max * 0.65 ? cut.slice(0, space) : cut).trim()}…`;
 };
 const locale = (lang) => lang === 'en' ? 'en-GB' : 'ru-RU';
+// Показатели с базой 1 (FWCI, специализация) — всегда с одинаковым числом знаков.
 const number = (lang, value, digits = 1) => finite(value)
-  ? new Intl.NumberFormat(locale(lang), { maximumFractionDigits: digits }).format(value).replace(/^-/, '−') : '—';
-const delta = (lang, value) => finite(value)
-  ? `${value > 0 ? '+' : value < 0 ? '−' : ''}${new Intl.NumberFormat(locale(lang), { style: 'percent', maximumFractionDigits: Math.abs(value) < 0.01 ? 1 : 0 }).format(Math.abs(value))}` : '—';
+  ? new Intl.NumberFormat(locale(lang), { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value).replace(/^-/, '−') : '—';
+// Знак ставится после округления: −0,4 % при нуле знаков даёт «0 %», а не «−0 %».
+const delta = (lang, value) => {
+  if (!finite(value)) return '—';
+  const digits = Math.abs(value) < 0.01 ? 1 : 0;
+  const rounded = Math.round(value * 10 ** (digits + 2)) / 10 ** (digits + 2);
+  return `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${new Intl.NumberFormat(locale(lang), { style: 'percent', minimumFractionDigits: 0, maximumFractionDigits: digits }).format(Math.abs(rounded))}`;
+};
 const tipAttr = (tip) => ` data-tip="${esc(JSON.stringify(tip))}"`;
 
 const WORDS = {
@@ -31,17 +37,17 @@ const WORDS = {
     above: 'ВЫШЕ МИРОВОГО СРЕДНЕГО', below: 'НИЖЕ МИРОВОГО СРЕДНЕГО',
     loss: 'ДОЛЯ ТЕМЫ СНИЖАЕТСЯ', gain: 'ДОЛЯ ТЕМЫ РАСТЁТ',
     key: 'Компетенции · номер на карте', unplotted: 'Нет координат: недостаточно данных',
-    work: 'Работы СТАНКИН', ai: 'Специализация AI', fwci: 'Цитирование FWCI',
+    work: 'Работы СТАНКИН', ai: 'Специализация (мир = 1)', fwci: 'Цитирование FWCI (мир = 1)',
     growthOwn: 'Поток работ СТАНКИН', growthWorld: 'Мировой поток работ',
     ownShareChange: 'Доля СТАНКИН в мировой тематике', worldShareChange: 'Доля тематики во всей мировой науке',
-    strong: 'Сильная база', rising: 'Развивать', gap: 'Дефицит', declining: 'Пересобрать', watch: 'Наблюдать',
+    strong: 'Сильная база', rising: 'Наращивать влияние', gap: 'Мир растёт, мы отстаём', declining: 'Сужать и переориентировать', watch: 'Проверить фокус',
     noData: 'Нет данных', filtered: 'Скрыто фильтром', confidence: 'Уверенность', action: 'Решение модели',
     area: 'Площадь круга = число работ', small: 'Меньше работ', large: 'Больше работ',
     matrix: 'Матрица силы и научной динамики',
-    matrixDesc: 'В каждой строке показаны число работ, специализация, нормализованное цитирование, динамика потоков работ и долей. AI и FWCI сравниваются с единицей; изменения — с нулём. Внутренние полосы расходятся от базового значения, пустые клетки обозначают отсутствие данных.',
-    baseline: 'AI / FWCI: база 1 · Динамика: база 0%',
+    matrixDesc: 'В каждой строке показаны число работ, специализация, нормализованное цитирование, динамика потоков работ и долей. Специализация и FWCI сравниваются с единицей; изменения — с нулём. Внутренние полосы расходятся от базового значения, пустые клетки обозначают отсутствие данных.',
+    baseline: 'Специализация и FWCI: база 1 · динамика: база 0 %',
     encoding: 'Цвет и длина полосы — положение относительно базы; числа — исходные значения.',
-    headers: [['Работы', 'СТАНКИН'], ['Специализация', 'AI'], ['Влияние', 'FWCI'], ['Поток работ', 'СТАНКИН'], ['Поток работ', 'мир'], ['Доля СТАНКИН', 'в мировой теме'], ['Доля темы', 'в мировой науке']],
+    headers: [['Работы', 'СТАНКИН'], ['Специализация', 'мир = 1'], ['Цитирование', 'FWCI, мир = 1'], ['Поток работ', 'СТАНКИН'], ['Поток работ', 'мир'], ['Доля СТАНКИН', 'в мировой теме'], ['Доля темы', 'в мировой науке']],
   },
   en: {
     title: 'Strategic map of research competencies',
@@ -51,17 +57,17 @@ const WORDS = {
     above: 'ABOVE WORLD AVERAGE', below: 'BELOW WORLD AVERAGE',
     loss: 'TOPIC SHARE FALLS', gain: 'TOPIC SHARE GROWS',
     key: 'Competencies · point number', unplotted: 'Not plotted: insufficient data',
-    work: 'STANKIN publications', ai: 'Specialisation AI', fwci: 'Citation impact FWCI',
+    work: 'STANKIN publications', ai: 'Specialisation (world = 1)', fwci: 'Citation impact FWCI (world = 1)',
     growthOwn: 'STANKIN publication flow', growthWorld: 'World publication flow',
     ownShareChange: 'STANKIN’s share of the global topic', worldShareChange: 'Topic share of all global research',
-    strong: 'Strong base', rising: 'Develop', gap: 'Capability gap', declining: 'Reconfigure', watch: 'Watch',
+    strong: 'Strong base', rising: 'Build citation impact', gap: 'World grows; we lose share', declining: 'Focus and redirect', watch: 'Review the focus',
     noData: 'No data', filtered: 'Hidden by filter', confidence: 'Confidence', action: 'Model decision',
     area: 'Bubble area = publication count', small: 'Fewer works', large: 'More works',
     matrix: 'Strength and research dynamics matrix',
-    matrixDesc: 'Rows show publication count, specialisation, citation impact, publication-flow changes and share changes. AI and FWCI are compared with one; changes with zero. Mini-bars diverge from the reference value and empty cells indicate missing data.',
-    baseline: 'AI / FWCI: reference 1 · Changes: reference 0%',
+    matrixDesc: 'Rows show publication count, specialisation, citation impact, publication-flow changes and share changes. Specialisation and FWCI are compared with one; changes with zero. Mini-bars diverge from the reference value and empty cells indicate missing data.',
+    baseline: 'Specialisation and FWCI: reference 1 · changes: reference 0%',
     encoding: 'Colour and bar length show position relative to the reference; numbers are raw values.',
-    headers: [['STANKIN', 'works'], ['Specialisation', 'AI'], ['Citation impact', 'FWCI'], ['STANKIN', 'work flow'], ['World', 'work flow'], ['STANKIN share', 'in world topic'], ['Topic share', 'in world science']],
+    headers: [['STANKIN', 'works'], ['Specialisation', 'world = 1'], ['Citation impact', 'FWCI, world = 1'], ['STANKIN', 'work flow'], ['World', 'work flow'], ['STANKIN share', 'in world topic'], ['Topic share', 'in world science']],
   },
 };
 

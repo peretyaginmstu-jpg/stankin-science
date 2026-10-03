@@ -15,6 +15,8 @@ export function cleanTitle(value) {
       }
       return ENTITIES[code.toLowerCase()] ?? m;
     })
+    // разметка индексов из старых записей Crossref: «Al-=SUB=-2-=/SUB=-O-=SUB=-3-=/SUB=-»
+    .replace(/-=\/?(SUB|SUP)=-/gi, '')
     .replace(/\s+/g, ' ')
     .trim();
 }

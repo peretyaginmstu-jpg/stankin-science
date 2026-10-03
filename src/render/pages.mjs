@@ -1,9 +1,12 @@
 // Содержимое страниц. Каждая функция получает контекст языка (kit.makeContext) и возвращает HTML <main>.
 
 import { bubble, lines, columns, hbars, divergingBar, refBar, sparkline } from '../charts/charts.mjs';
-import { esc, kpis, figure, legend, bubbleKey, table, cell, text, workItem, rankText, quadrantTag, tip } from './kit.mjs';
+import { esc, kpis, figure, legend, bubbleKey, table, cell, text, workItem, rankText, rankShort, quadrantTag, tip } from './kit.mjs';
 import { strategyBrief, competencyDecision, topicsSection } from './strategy.mjs';
 import { betBanner, siteGuide, betRole } from './guide.mjs';
+import { MIXED_COMPETENCY_IDS } from '../lib/strategy.mjs';
+
+export const MAP_X_CAP = 64;
 
 const visibleOf = (model) => model.competencies.filter((c) => c.visible);
 
@@ -49,6 +52,7 @@ export function competencyMapSpec(ctx) {
     x: c.ai,
     y: c.fwci,
     size: c.n,
+    hollow: MIXED_COMPETENCY_IDS.includes(c.id),
     href: ctx.page(`competencies/${c.id}/`),
     tip: tip(ctx.compName(c.id), [
       [ctx.dec(c.ai), t.metric.aiShort],
@@ -60,7 +64,7 @@ export function competencyMapSpec(ctx) {
   return {
     lang: ctx.lang,
     label: t.home.mapAria,
-    x: { type: 'log', ref: 1, label: t.home.mapX, short: t.home.mapXShort, refLabel: t.home.mapXRef },
+    x: { type: 'log', ref: 1, max: MAP_X_CAP, label: t.home.mapX, short: t.home.mapXShort, refLabel: t.home.mapXRef },
     y: { type: 'linear', ref: 1, label: t.home.mapY, zero: true, refLabel: t.home.mapYRef },
     quadrants: { tl: t.quadrant.niche, tr: t.quadrant.leader, bl: t.quadrant.background, br: t.quadrant.specialized },
     points,
@@ -78,11 +82,12 @@ function competencyTable(ctx, rows, { sortable = true, compactCols = false } = {
     { key: 'top10', label: t.metric.top10Short, num: true, title: t.metric.top10Note },
   ];
   if (!compactCols) {
+    const ru = ctx.lang === 'ru';
     cols.push(
-      { key: 'growthOwn', label: t.metric.growthOwn, num: true },
+      { key: 'growthOwn', label: ru ? 'Рост вуза' : 'Own growth', num: true, title: t.metric.growthOwn },
       { key: 'growthWorld', label: t.metric.growthWorld, num: true },
-      { key: 'rankHome', label: t.metric.rankHome, num: true },
-      { key: 'rankWorld', label: t.metric.rankWorld, num: true },
+      { key: 'rankHome', label: ru ? 'В России' : 'Russia', num: true, title: t.metric.rankHome },
+      { key: 'rankWorld', label: ru ? 'В мире' : 'World', num: true, title: t.metric.rankWorld },
     );
   }
   const body = rows.map((c) => ({
@@ -95,8 +100,8 @@ function competencyTable(ctx, rows, { sortable = true, compactCols = false } = {
       top10: cell(ctx.pct(c.top10), c.top10),
       growthOwn: cell(ctx.change(c.growthOwn), c.growthOwn),
       growthWorld: cell(ctx.change(c.growthWorld), c.growthWorld),
-      rankHome: cell(esc(rankText(ctx, c.rankHome)), c.rankHome?.exact ? c.rankHome.rank : 9999),
-      rankWorld: cell(esc(rankText(ctx, c.rankWorld)), c.rankWorld?.exact ? c.rankWorld.rank : 9999),
+      rankHome: cell(`<span title="${esc(rankText(ctx, c.rankHome))}">${esc(rankShort(ctx, c.rankHome))}</span>`, c.rankHome?.exact ? c.rankHome.rank : 9999),
+      rankWorld: cell(`<span title="${esc(rankText(ctx, c.rankWorld))}">${esc(rankShort(ctx, c.rankWorld))}</span>`, c.rankWorld?.exact ? c.rankWorld.rank : 9999),
     },
   }));
   return table(cols, body, { sortable });
@@ -153,7 +158,7 @@ export function homePage(ctx) {
     type: 'bubble',
     spec: mapSpec,
     svg: bubble(mapSpec, 1160),
-    after: bubbleKey(mapSpec),
+    after: `${bubbleKey(mapSpec)}<p class="chart-foot">${esc(t.home.mapNote(MAP_X_CAP))}</p>`,
     table: competencyTable(ctx, [...vis].sort((a, b) => (b.ai ?? 0) - (a.ai ?? 0)), { sortable: true, compactCols: true }),
     wide: true,
   });
@@ -482,9 +487,42 @@ export function collaborationPage(ctx) {
     hero(ctx, { eyebrow: t.site.university, title: t.collaboration.title, lead: t.collaboration.lead, extra: `${dataNote(ctx)}${tiles}` }),
     section('pish-implication', ctx.lang === 'ru' ? 'Что это значит для заявки ПИШ' : 'What this means for the PISH application', '', `<div class="collab-implication"><div class="collab-implication-figure"><strong>${esc(ctx.pct(col.companyShare))}</strong><span>${esc(ctx.lang === 'ru' ? 'работ с соавторами из промышленных компаний' : 'of works with industrial co-authors')}</span></div><div><p>${esc(ctx.lang === 'ru' ? 'Кооперация даёт 40% оценки заявки, а квалифицированный заказчик должен вложить не меньше 50% бюджетных средств. Совместных публикаций с компаниями пока мало: опыт работы с промышленностью придётся подтверждать договорами, испытаниями и актами, а не статьями. Совместные работы с заказчиком — измеримый показатель для первых лет новой школы.' : 'Cooperation carries 40% of the assessment, and the qualified customer must contribute at least 50% of the budget funding. Joint papers with companies are still rare: industrial experience must be shown through contracts, trials and acceptance records rather than papers. Joint work with the customer is a measurable indicator for the new school’s first years.')}</p><p><a class="text-link" href="${esc(ctx.page('pish/'))}#pish-cooperation">${esc(ctx.lang === 'ru' ? 'Кооперация в ставке ПИШ' : 'Cooperation in the PISH bet')}</a></p></div></div>`, { cls: 'section-tight' }),
     section('countries-section', t.collaboration.countriesTitle, t.collaboration.countriesLead, `<div class="grid-side">${countries}${intl}</div>`),
+    industrySection(ctx),
     section('foreign', t.collaboration.foreignTitle, '', orgTable(col.partnersForeign)),
     section('home', t.collaboration.homeTitle, '', orgTable(col.partnersHome)),
   ].join('\n');
+}
+
+// Компании-соавторы и сравнение цитирования с зарубежными соавторами и без (model.betEvidence).
+function industrySection(ctx) {
+  const ev = ctx.model.betEvidence;
+  if (!ev) return '';
+  const L = (ru, en) => (ctx.lang === 'ru' ? ru : en);
+  const ind = ev.industry;
+  const intl = ev.international;
+  const comps = (r) => Object.entries(r.competencies).sort((a, b) => b[1] - a[1]).map(([id, n]) => `${ctx.compShort(id)} ${ctx.int(n)}`).join(', ') || '—';
+  const companies = table(
+    [{ key: 'name', label: L('Компания', 'Company') }, { key: 'country', label: ctx.t.metric.country }, { key: 'n', label: L('Работ 2016–2025', 'Works 2016–2025'), num: true }, { key: 'p2', label: L('Из них 2021–2025', 'Of which 2021–2025'), num: true }, { key: 'comp', label: L('Компетенции', 'Competencies') }],
+    ind.companies.map((r) => ({ cells: { name: text(String(r.name).replace(/\s*\([^()]*\)\s*$/, '')), country: text(ctx.country(r.country)), n: cell(ctx.int(r.n), r.n), p2: cell(ctx.int(r.nP2), r.nP2), comp: text(comps(r)) } })),
+    { sortable: true },
+  );
+
+  const p2 = `${ev.period.p2[0]}–${ev.period.p2[1]}`;
+  const d2 = (v) => ctx.dec(v, 2);
+  const stats = kpis([
+    { label: L('Работ с компаниями, 2016–2025', 'Works with companies, 2016–2025'), value: ctx.int(ind.works), note: L(`из них с российскими — ${ctx.int(ind.worksRu)}`, `with Russian companies: ${ctx.int(ind.worksRu)}`) },
+    { label: L(`В ядре ставки ПИШ, ${p2}`, `In the core of the PISH bet, ${p2}`), value: ctx.int(ind.coreP2), note: L('резание и метрология', 'machining and metrology') },
+    { label: L(`Там, где нужен партнёр, ${p2}`, `Where a partner is needed, ${p2}`), value: ctx.int(ind.gapsP2), note: L('станки и управление, диагностика, ИИ', 'machine tools and control, diagnostics, AI') },
+  ]);
+  const intlTable = table(
+    [{ key: 'g', label: L(`Работы ${p2}`, `Works ${p2}`) }, { key: 'n', label: L('Работ', 'Works'), num: true }, { key: 'm', label: L('FWCI среднее', 'Mean FWCI'), num: true }, { key: 'md', label: L('Медиана', 'Median'), num: true }, { key: 't', label: L('Топ-10 %', 'Top 10%'), num: true }],
+    [[L('С зарубежными соавторами', 'With foreign co-authors'), intl.intl], [L('Только российские авторы', 'Russian authors only'), intl.domestic]].map(([g, r]) => ({ cells: { g: text(g), n: cell(ctx.int(r.n), r.n), m: cell(d2(r.fwci), r.fwci), md: cell(d2(r.fwciMedian), r.fwciMedian), t: cell(ctx.pct(r.top10), r.top10) } })),
+  );
+  return section('industry', L('Промышленность и зарубежные соавторы', 'Industry and foreign co-authors'),
+    L('Компании — организации с типом «company» в OpenAlex. Соавторство показывает совместную публикацию, а не договор или внедрение.', 'Companies are organisations of type “company” in OpenAlex. Co-authorship shows a joint publication, not a contract or deployment.'),
+    `${stats}<h3 class="table-title table-title-gap">${esc(L('Компании среди соавторов', 'Companies among co-authors'))}</h3>${companies}<p class="chart-foot"><a class="text-link" href="${esc(ctx.page('pish/'))}#pish-evidence-strength">${esc(L('Что это значит для ставки ПИШ', 'What this means for the PISH bet'))}</a></p>
+    <h3 class="table-title table-title-gap">${esc(L('Цитирование с зарубежными соавторами и без них', 'Citations with and without foreign co-authors'))}</h3>${intlTable}
+    <p class="chart-foot">${esc(L('Связь, а не причина: в совместные работы чаще попадают сильные результаты. Средние чувствительны к отдельным работам, поэтому рядом показана медиана.', 'An association, not a cause: strong results are more likely to be joint works. Means are sensitive to single works, so the median is shown alongside.'))}</p>`);
 }
 
 // ---------- методика ----------------------------------------------------------------------
@@ -529,7 +567,7 @@ export function methodPage(ctx, { competencies }) {
       <ul class="topics"><li class="topics-head"><span>${esc(t.metric.topic)}</span><span class="num">${esc(t.metric.worldWorks)}</span><span class="num">${esc(t.site.universityShort)}</span></li>${rows}</ul></details>`;
   }).join('');
   const share = cov.classifiedWorks ? cov.assignedWorks / cov.classifiedWorks : null;
-  blocks.push(tightSection('competencies', t.method.competenciesTitle, '', `<p>${esc(t.method.competencies)}</p><p>${esc(t.method.coverage({ assigned: ctx.int(cov.assignedWorks), classified: ctx.int(cov.classifiedWorks), share: ctx.pct(share), unclassified: ctx.int(cov.unclassifiedWorks) }))}</p>${compBlocks}
+  blocks.push(tightSection('competencies', t.method.competenciesTitle, '', `<p>${esc(t.method.competencies)}</p><p>${esc(t.method.coverage({ assigned: ctx.int(cov.assignedWorks), classified: ctx.int(cov.classifiedWorks), share: ctx.pct(share), unclassified: ctx.int(cov.unclassifiedWorks), unclassifiedN: cov.unclassifiedWorks }))}</p>${compBlocks}
     ${cov.unassignedTopics.length ? `<h3>${esc(t.method.unassignedTitle)}</h3>${table([{ key: 'name', label: t.metric.topic }, { key: 'sub', label: t.metric.subfield }, { key: 'n', label: t.metric.works, num: true }], cov.unassignedTopics.map((x) => ({ cells: { name: cell(`<span lang="en">${esc(x.name)}</span>`, x.name), sub: text(ctx.subfieldName(x.subfield)), n: cell(ctx.int(x.n), x.n) } })))}` : ''}`));
   blocks.push(tightSection('limits', t.method.limitsTitle, '', `<ul class="bullets">${t.method.limits.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`));
   blocks.push(tightSection('update', t.method.updateTitle, '', `<p>${esc(t.method.update)}</p><p><a class="text-link" href="${esc(ctx.site.repoUrl)}" rel="noopener">${esc(t.footer.code)}</a></p>`));

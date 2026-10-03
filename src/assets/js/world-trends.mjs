@@ -22,10 +22,15 @@ export async function initWorldTrends(root) {
   const language = en ? 'en' : 'ru';
   const L = (ru, eng) => en ? eng : ru;
   const num = (value, digits = 0) => finite(value)
-    ? new Intl.NumberFormat(en ? 'en' : 'ru', { maximumFractionDigits: digits }).format(value) : '—';
-  const change = value => finite(value) ? `${value > 0 ? '+' : ''}${num(value * 100, 1)}%` : '—';
+    ? new Intl.NumberFormat(en ? 'en' : 'ru', { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(value).replace(/^-/, '−') : '—';
+  const unit = en ? '%' : '\u00a0%';
+  const change = value => {
+    if (!finite(value)) return '—';
+    const rounded = Math.round(value * 1000) / 10;
+    return `${rounded > 0 ? '+' : ''}${num(rounded, 1)}${unit}`;
+  };
   // Shares of world output are tiny; three significant digits keep them readable and comparable.
-  const share = value => finite(value) ? `${new Intl.NumberFormat(en ? 'en' : 'ru', { minimumSignificantDigits: 3, maximumSignificantDigits: 3 }).format(value * 100)}%` : '—';
+  const share = value => finite(value) ? `${new Intl.NumberFormat(en ? 'en' : 'ru', { minimumSignificantDigits: 3, maximumSignificantDigits: 3 }).format(value * 100)}${unit}` : '—';
   const localText = value => typeof value === 'string' ? value : value?.[language] ?? '';
   const name = item => localText(item.name) || item.id;
   const status = root.querySelector('[data-world-status]');
@@ -174,14 +179,14 @@ export async function initWorldTrends(root) {
     const step = [1, 2, 2.5, 5, 10].map(k => k * magnitude).find(v => span / v <= (compact ? 4 : 6)) ?? 10 * magnitude;
     const xAxes = [{ type: 'value', min: Math.floor(rawMin / step) * step,
       max: Math.ceil(rawMax / step) * step, interval: step, axisLine: { show: false }, axisTick: { show: false },
-      axisLabel: { fontSize: 11, formatter: value => `${num(value)}%` },
+      axisLabel: { fontSize: 11, formatter: value => `${num(value)}${unit}` },
       splitLine: { lineStyle: { color: '#e0e6eb' } } }];
     const series = [{ name: metricTitle, type: 'bar', barMaxWidth: 24,
       data: rows.map(item => ({ id: item.id, value: finite(selectedMetric(item)) ? selectedMetric(item) * 100 : null,
         itemStyle: { color: selectedMetric(item) >= 0 ? '#2469a4' : '#b75e22',
           borderColor: item.id === active?.id ? '#102c43' : 'transparent', borderWidth: item.id === active?.id ? 3 : 0 },
         label: { position: selectedMetric(item) < 0 ? 'left' : 'right' } })),
-      label: { show: true, color: '#28333d', fontSize: 11, formatter: params => finite(params.value) ? `${params.value > 0 ? '+' : ''}${num(params.value, 1)}%` : '' },
+      label: { show: true, color: '#28333d', fontSize: 11, formatter: params => finite(params.value) ? `${params.value > 0 ? '+' : ''}${num(params.value, 1)}${unit}` : '' },
       emphasis: { itemStyle: { borderWidth: 3, borderColor: '#102c43' } },
       markLine: { silent: true, symbol: 'none', label: { show: false }, lineStyle: { color: '#8996a1', type: 'solid' }, data: [{ xAxis: 0 }] } }];
     const titles = [{ text: metricTitle, subtext: `${periodName('p2')} / ${periodName('p1')}`, left: compact ? 10 : '32%', top: 12,

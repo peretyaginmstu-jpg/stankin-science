@@ -18,8 +18,8 @@ export async function initExplorer(root) {
   if(root.dataset.initialized)return;
   root.dataset.initialized='true';root.setAttribute('aria-busy','true');
   const en=root.dataset.lang==='en', L=(ru,eng)=>en?eng:ru;
-  const num=(v,d=0)=>finite(v)?new Intl.NumberFormat(en?'en':'ru',{maximumFractionDigits:d}).format(v):'—';
-  const pct=(v)=>finite(v)?`${v>0?'+':''}${num(v*100,1)}%`:'—';
+  const num=(v,d=0)=>finite(v)?new Intl.NumberFormat(en?'en':'ru',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v).replace(/^-/,'−'):'—';
+  const pct=(v)=>{if(!finite(v))return '—';const r=Math.round(v*1000)/10;return `${r>0?'+':''}${num(r,1)}${en?'%':'\u00a0%'}`;};
   const status=root.querySelector('[data-explorer-status]');
   const controls=root.querySelector('[data-explorer-controls]');
   const level=root.querySelector('[data-explorer-level]'),mode=root.querySelector('[data-explorer-mode]');
@@ -65,7 +65,7 @@ export async function initExplorer(root) {
     if(!rows.length){worksHost.append(node('p','explorer-empty',L('В этом срезе снимка работ нет. Это не доказывает отсутствие специалистов или исследований.','No works in this slice of the snapshot. This does not prove an absence of people or research.')));return;}
     const list=node('ol','explorer-work-list');list.start=page*10+1;
     for(const w of rows.slice(page*10,page*10+10)){
-      const li=node('li');li.append(node('span','explorer-work-meta',`${w.year} · FWCI ${num(w.fwci,3)} · ${L('цитирований','citations')}: ${num(w.citations)}`));
+      const li=node('li');li.append(node('span','explorer-work-meta',`${w.year} · FWCI ${num(w.fwci,2)} · ${L('цитирований','citations')}: ${num(w.citations)}`));
       const title=w.title||L('Название не указано','Untitled work');
       li.append(/^W\d+$/.test(w.id)?link(title,`https://openalex.org/${w.id}`):node('span','',title));list.append(li);
     }worksHost.append(list);
@@ -83,10 +83,10 @@ export async function initExplorer(root) {
     metrics(detail,[[L('Наши работы: два пятилетия','Our works: two periods'),`${num(item.nP1)} → ${num(item.nP2)}`],
       [L('Мировая доля темы · изменение','Topic world share · change'),pct(item.worldShareChange)],
       [L('Наша доля внутри темы · изменение','Our share within topic · change'),pct(item.ownWorldShareChange)],
-      [`FWCI · ${periodName()}`,num(c?.fwci,3)],
+      [`FWCI · ${periodName()}`,num(c?.fwci,2)],
       [L('Покрытие FWCI','FWCI coverage'),`${num(c?.fwciN)} / ${num(c?.n)}`]]);
     const ci=c?.fwciCI95;
-    detail.append(node('p','explorer-note',finite(ci?.lower)&&finite(ci?.upper)?`${L('Условный 95% интервал среднего','Conditional 95% mean interval')}: ${num(ci.lower,3)} … ${num(ci.upper,3)}`:L('Интервал для этого среза не рассчитан.','No interval was calculated for this slice.')));
+    detail.append(node('p','explorer-note',finite(ci?.lower)&&finite(ci?.upper)?`${L('Условный 95% интервал среднего','Conditional 95% mean interval')}: ${num(ci.lower,2)} … ${num(ci.upper,2)}`:L('Интервал для этого среза не рассчитан.','No interval was calculated for this slice.')));
     let verdict=L('Для сравнения долей не хватает данных или ненулевой исходной базы.','Comparing shares requires data and a non-zero baseline.');
     if(finite(item.worldShareChange)&&finite(item.ownWorldShareChange)) {
       const w=item.worldShareChange,o=item.ownWorldShareChange;
@@ -117,7 +117,7 @@ export async function initExplorer(root) {
       grid:{left:compact?58:70,right:25,top:50,bottom:95},
       xAxis:{type:'value',name:L('Мировая доля темы · изменение, %','Topic world share · change, %'),nameLocation:'middle',nameGap:35,nameTextStyle:{fontSize:12},axisLabel:{fontSize:11,formatter:v=>`${num(v,0)}%`},splitLine:{lineStyle:{color:'#e4e8eb'}},axisLine:{onZero:true}},
       yAxis:{type:'value',name:position?L('Наша доля · изменение, %','Our share · change, %'):L(`Средний FWCI · ${periodName()}`,`Mean FWCI · ${periodName()}`),nameTextStyle:{fontSize:12},nameLocation:'end',axisLabel:{fontSize:11,formatter:v=>position?`${num(v,0)}%`:num(v,1)},splitLine:{lineStyle:{color:'#e4e8eb'}},min:position?null:0},
-      tooltip:{trigger:'item',renderMode:'richText',confine:true,textStyle:{fontSize:13},formatter:p=>{const e=p.data.entry;return `${name(e).replace(/[{}]/g,'')}\n${L('Изменение мировой доли','World share change')}: ${pct(e.worldShareChange)}\n${position?L('Изменение нашей доли','Our share change'):`FWCI ${periodName()}`}: ${position?pct(e.ownWorldShareChange):num(cohort(e)?.fwci,3)}\n${L('Работы','Works')}: ${num(e.nP1)} → ${num(e.nP2)}`;}},
+      tooltip:{trigger:'item',renderMode:'richText',confine:true,textStyle:{fontSize:13},formatter:p=>{const e=p.data.entry;return `${name(e).replace(/[{}]/g,'')}\n${L('Изменение мировой доли','World share change')}: ${pct(e.worldShareChange)}\n${position?L('Изменение нашей доли','Our share change'):`FWCI ${periodName()}`}: ${position?pct(e.ownWorldShareChange):num(cohort(e)?.fwci,2)}\n${L('Работы','Works')}: ${num(e.nP1)} → ${num(e.nP2)}`;}},
       dataZoom:[{type:'slider',xAxisIndex:0,bottom:15,height:20,showDetail:false,brushSelect:false,filterMode:'none'}],
       series:[{type:'scatter',data:points.map(({entry,index,xy})=>{const active=entry.id===item.id,tone=(position?xy[1]>=0:xy[1]>=1)?'#2469a4':'#b75e22';return {value:xy,id:entry.id,entry,number:index+1,symbolSize:active?32:25,itemStyle:{color:small(entry)?'#fff':tone,borderColor:active?'#172c40':tone,borderWidth:active?3:1.5,opacity:1},label:{color:small(entry)?tone:'#fff'}};}),
         label:{show:true,position:'inside',fontSize:11,fontWeight:600,formatter:p=>String(p.data.number)},

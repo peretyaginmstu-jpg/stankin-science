@@ -57,7 +57,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: [21, 22, 25, 31] },
       name: /fault (diagnos|detection)|condition monitoring|machine (health|condition)|prognos|remaining useful life|predictive maintenance|vibration (analysis|signal|monitoring|based)|acoustic emission|structural health monitoring|non-?destructive (testing|evaluation|inspection)|ultrasonic (testing|inspection|nondestructive)|eddy current|damage (detection|identification)|tool (condition|wear) monitoring|reliability|maintenance/i,
-      exclude: /bridge|seismic|earthquake|building|civil|concrete|medical|patient|software|power (system|grid)|smart grid/i,
+      exclude: /bridge|seismic|earthquake|building|civil|concrete|medical|patient|software|power (system|grid)|smart grid|infrastructure|structural (health|engineering|integrity)|interconnect|electrical fault|fluid dynamics/i,
     },
   },
   {
@@ -71,7 +71,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: [17, 22, 26, 31] },
       name: /robot|manipulator|exoskeleton|legged locomotion|humanoid|gripper|grasp|teleoperat|haptic|parallel (mechanism|manipulator|kinematic)|cable-driven|unmanned|\buav\b|drone|path planning|motion planning/i,
-      exclude: /surg/i,
+      exclude: /surg|process automation|educational robotics/i,
     },
   },
   {
@@ -85,7 +85,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: PHYSICAL },
       name: /coating|thin film|surface (treatment|modification|engineering|hardening|integrity|nanocrystalli)|nitrid(ing|e coating)|carburi[sz]|boriding|physical vapou?r|chemical vapou?r|\bpvd\b|\bcvd\b|diamond-like|hard (film|coating)|tribolog|\bwear\b|friction|lubric|corrosion|oxidation (resistance|behavio)|anodi[csz]|electrodeposit|electroless|thermal spray|cold spray|plasma electrolytic|micro-?arc oxidation|electroplat/i,
-      exclude: /tooth|dental|soil|coastal|river|sediment|concrete|cement|asphalt|biofilm|food|skin|cartilage|knee|\bhip\b|solar cell|perovskite|photovoltaic|transistor|semiconductor|battery|\belectrodes?\b|catalys|magnetic|ferroelectric|superconduct|spintronic|optical|tool wear|cutting|machining|milling|turning|drilling/i,
+      exclude: /tooth|dental|soil|coastal|river|sediment|concrete|cement|asphalt|biofilm|food|skin|cartilage|knee|\bhip\b|solar cell|perovskite|photovoltaic|transistor|semiconductor|battery|\belectrodes?\b|catalys|magnetic|ferroelectric|superconduct|spintronic|optical|tool wear|cutting|machining|milling|turning|drilling|fluid dynamics/i,
     },
   },
   {
@@ -99,7 +99,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: PHYSICAL },
       name: /laser|electrical discharge|electro-?discharge|spark erosion|electrochemical machin|plasma|ion beam|ion implant|ion-surface|ion (bombard|irradiat)|electron beam|sputter|vacuum arc|glow discharge|arc discharge|ultrasonic(ally)? (assisted|machin|vibration)|water ?jet|abrasive jet|femtosecond|ultrashort pulse|micro-?machin|micro-?fabricat|magnetron/i,
-      exclude: /fusion|tokamak|stellarator|inertial confinement|laser.?plasma (interaction|accelerat)|wakefield|astro|solar|ionosph|magnetosph|space plasma|cosmic|dusty plasma|quark|gluon|nuclear|lidar|spectroscop|optical (communication|fiber)|fiber laser|frequency comb|laser cooling|atom trap|quantum|semiconductor laser|laser diode|random laser|plasmonic|blood|cancer|medic|therap|skin|dermat|ophthalm|dental/i,
+      exclude: /fusion|tokamak|stellarator|inertial confinement|laser.?plasma (interaction|accelerat)|wakefield|astro|solar|ionosph|magnetosph|space plasma|cosmic|dusty plasma|quark|gluon|nuclear|lidar|spectroscop|optical (communication|fiber)|fiber laser|frequency comb|laser cooling|atom trap|quantum|semiconductor laser|laser diode|random laser|plasmonic|blood|cancer|medic|therap|skin|dermat|ophthalm|dental|particle accelerator|free-electron|dust|aerodynamic/i,
     },
   },
   {
@@ -113,7 +113,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: [22, 25] },
       name: /machining|machinability|machined|cutting|milling|turning|drilling|grinding|polishing|finishing|abrasive|chip formation|tool (wear|life|geometry)|\bburr|boring|reaming|broaching|honing|lapping|surface roughness|chatter|material removal/i,
-      exclude: /cutting.?edge|cutting plane|graph|drilling (fluid|mud|rig|well)|\boil\b|\bgas\b|borehole|wellbore|grinding (mill|media|ore)|comminut|wood|timber|textile|food|agricultur|electrical machine/i,
+      exclude: /cutting.?edge|cutting plane|graph|drilling (fluid|mud|rig|well)|\boil\b|\bgas\b|borehole|wellbore|grinding (mill|media|ore)|comminut|mineral|well engineering|wood|timber|textile|food|agricultur|electrical machine/i,
     },
   },
   {
@@ -126,8 +126,8 @@ export const COMPETENCIES = [
     },
     match: {
       scope: { fields: [22, 25] },
-      name: /forming|forging|rolling|extrusion|stamping|sheet metal|deep drawing|bending|severe plastic|equal channel|high pressure torsion|welding|\bweld|brazing|soldering|joining|riveting|casting|foundry|solidification/i,
-      exclude: /beamforming|beam forming|image forming|pattern forming|food|pharm|injection mold|film blowing|seismic|rolling bearing|rolling element/i,
+      name: /forming|forging|rolling|extrusion|stamping|sheet metal|deep drawing|bending|severe plastic|equal channel|high pressure torsion|welding|\bweld|brazing|soldering|joining|riveting|\bcasting|foundry|solidification/i,
+      exclude: /beamforming|beam forming|image forming|pattern forming|food|pharm|injection mold|film blowing|seismic|rolling bearing|rolling element|forecast|broadcast|telecommunication|electronic packaging/i,
     },
   },
   {
@@ -156,7 +156,7 @@ export const COMPETENCIES = [
       whole: { subfields: [2506] },
       scope: { fields: [22, 25, 31] },
       name: /alloy|steel|titanium|alumin(i)?um|magnesium|nickel|copper|superalloy|high-entropy|intermetallic|shape memory|martensit|austenit|metallic glass|amorphous (alloy|metal)|hydrogen embrittlement|heat treatment|metallurg|microstructur/i,
-      exclude: /nanoparticle|catalys|battery|hydrogen storage|electrode|semiconductor|magnetic|superconduct/i,
+      exclude: /nanoparticle|catalys|battery|hydrogen storage|electrode|semiconductor|magnetic|superconduct|interconnect/i,
     },
   },
   {
@@ -183,7 +183,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: [14, 17, 18, 22, 31] },
       name: /metrolog|measur|calibrat|interferomet|profilometr|surface (texture|topography)|uncertainty (analysis|evaluation)|gauge|toleranc|inspection|optical testing|3d (scanning|reconstruction)|photogrammetr|machine vision|vision system|defect detection|\bquality\b|six sigma|statistical process control|standardi[sz]ation|^(gas sensing nanomaterials and sensors|digital holography and microscopy)$/i,
-      exclude: /blood pressure|clinical|patient|health|water quality|air quality|soil|food|quality of life|software quality|service quality|education|teaching|psycholog|questionnaire|radiation dose|neutron|particle physics|financial|accounting/i,
+      exclude: /blood pressure|clinical|patient|health|water quality|air quality|soil|food|quality of life|software quality|service quality|education|teaching|psycholog|questionnaire|radiation dose|neutron|particle physics|financial|accounting|fault toleran|distributed system|power quality|harmonic|data quality|video quality|radioactive|satellite|geodetic|agreement in measurement/i,
     },
   },
   {
@@ -198,7 +198,7 @@ export const COMPETENCIES = [
       whole: { subfields: [1702, 1707] },
       scope: { fields: [17, 22] },
       name: /machine learning|deep learning|neural network|data mining|data processing|big data|computer vision|image (recognition|processing|segmentation|classification|fusion)|pattern recognition|reinforcement learning|explainable|natural language|language model|fuzzy (logic|system)|genetic algorithm|evolutionary (algorithm|computation)|swarm intelligence|metaheuristic|^Advanced Research in Systems and Signal Processing$/i,
-      exclude: /medical image|brain|eeg|ecg|cancer|disease|clinical|protein|genom/i,
+      exclude: /medical image|brain|eeg|ecg|cancer|disease|clinical|protein|genom|educational/i,
     },
   },
   {
@@ -212,7 +212,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: [14, 17, 18, 22] },
       name: /industry 4\.0|industrie 4|digital twin|smart (manufacturing|factor|production)|cyber-?physical|manufacturing (system|execution|process|planning|optimization|technolog)|production (planning|scheduling|system|management)|scheduling|\blean\b|reconfigurable|flexible manufactur|computer-aided|\bcad\b|\bcam\b|product lifecycle|\bplm\b|product (development|design|customi[sz]ation)|design optimi[sz]ation|virtual (reality|commissioning)|augmented reality|digital transformation|industrial internet|internet of things|\biiot\b|industrial (iot|engineering|technolog)|supply chain|logistic|enterprise (system|resource)|\berp\b|maintenance (management|planning)/i,
-      exclude: /health|hospital|patient|agricultur|farm|food|touris|education|construction (project|management)|building information|\bbim\b|transport(ation)? network|urban|cities|\bcity\b|energy (market|management)|power system|smart grid/i,
+      exclude: /health|hospital|patient|agricultur|farm|food|touris|education|construction (project|management)|building information|\bbim\b|transport(ation)? network|urban|cities|\bcity\b|energy (market|management)|power system|smart grid|\blaw\b|international trade|maritime|\bports?\b|transport|social network|virtual reality applications|timetabling|real-time systems/i,
     },
   },
   {
@@ -226,7 +226,7 @@ export const COMPETENCIES = [
     match: {
       scope: { fields: [17, 22] },
       name: /machine tool|\bcnc\b|numerical(ly)? control|spindle|feed drive|servo|motion control|linear motor|ball screw|guideway|bearing|\bgear|transmission|mechanism|kinematic|vibration|dynamics (of|analysis)|hydraulic|pneumatic|actuator|electric drive|drive system|electric(al)? motor|induction motor|permanent magnet (synchronous|motor)|motor control|control system|controller|\bpid\b|model predictive|sliding mode|adaptive control|iterative learning|nonlinear control|system identification|\bplc\b|programmable logic|scada|industrial (control|automation)|automation|mechatronic/i,
-      exclude: /power (system|grid)|smart grid|microgrid|\bwind\b|photovoltaic|battery|vehicle|traffic|aircraft|spacecraft|satellite|\bship|marine|railway|automotive|building|hvac|biolog|medic|heart|brain|epidemic|wireless|network(ed)? control|transmission line|power transmission|data transmission/i,
+      exclude: /power (system|grid)|smart grid|microgrid|\bwind\b|photovoltaic|battery|vehicle|traffic|aircraft|spacecraft|satellite|\bship|marine|railway|automotive|building|hvac|biolog|medic|heart|brain|epidemic|wireless|network(ed)? control|transmission line|power transmission|data transmission|reservoir|hydrocarbon|hydraulic fracturing|nuclear|heat transfer|aerospace|aeroelastic|flight|guidance|bladed disk|structural load|hydraulic flow and structures|dielectric|structural|fluid dynamics|process automation/i,
     },
   },
   {
@@ -269,7 +269,7 @@ export const COMPETENCIES = [
       whole: { fields: [26] },
       scope: { fields: [17, 22, 25, 31] },
       name: /simulation|modell?ing|numerical (method|simulation|analysis)|finite element|boundary element|differential equation|mathematical model|computational (mechanics|fluid)|geometry|optimi[sz]ation and packing|elasticity|plasticity|viscoelast|fracture|fatigue|\bcrack|stress (analysis|concentration)|contact mechanics|thermoelast|heat (transfer|conduction)|thermal (analysis|stress)|fluid (dynamics|flow)|\bcfd\b|turbulen|topology optimi[sz]ation|inverse problem|wave propagation|stability analysis|nonlinear dynamics/i,
-      exclude: /biolog|medic|blood|brain|heart|neur|epidemi|financ|econom/i,
+      exclude: /biolog|medic|blood|brain|heart|neur|epidemi|financ|econom|reservoir|hydrocarbon|petroleum/i,
     },
   },
   {

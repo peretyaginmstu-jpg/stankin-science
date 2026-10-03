@@ -1,3 +1,4 @@
+import { plural } from '../src/lib/format.mjs';
 // Тексты интерфейса и страниц на русском и английском. Числа подставляет сборка.
 // Ключи у языков одинаковые — это проверяет tools/check.mjs.
 
@@ -24,6 +25,7 @@ export const STRINGS = {
       pish: 'ПИШ: ставка',
       competencies: 'Компетенции',
       trends: 'Мировые тренды',
+      'industry-index': 'Отраслевой индекс',
       collaboration: 'Сотрудничество',
       method: 'Методика',
     },
@@ -133,6 +135,7 @@ export const STRINGS = {
       mapXShort: 'Специализация, мир = 1',
       mapYRef: 'средний мировой уровень',
       mapAria: 'Пузырьковая диаграмма: индекс специализации и нормализованная цитируемость по компетенциям университета',
+      mapNote: (cap) => `Полый круг — смешанный кластер OpenAlex: в нём собраны разные задачи, поэтому высокий индекс специализации не означает профильного лидерства. Значения выше ${cap} вынесены в полосу справа, настоящее число — в подписи.`,
       cardsTitle: 'Компетенции',
       cardsLead: (min) => `Направления, по которым у университета не меньше ${min} публикаций. Порядок — по индексу специализации.`,
       dynamicsTitle: 'Динамика публикаций',
@@ -162,7 +165,7 @@ export const STRINGS = {
     },
     competencies: {
       title: 'Компетенции',
-      lead: (n) => `${n} тематических направлений, в которые сгруппированы темы мировой классификации OpenAlex. Для каждого — объём публикаций университета, доля в мировом потоке, специализация, цитируемость и место среди организаций России и мира.`,
+      lead: (n) => `${n} ${plural('ru', n, ['тематическое направление', 'тематических направления', 'тематических направлений'])}, в которые сгруппированы темы мировой классификации OpenAlex. Для каждого — объём публикаций университета, доля в мировом потоке, специализация, цитируемость и место среди организаций России и мира.`,
       tableTitle: 'Сравнение компетенций',
       hidden: (min) => `Компетенции, где у университета меньше ${min} публикаций, в таблице не показаны.`,
       mapTitle: 'Карта направлений',
@@ -262,7 +265,7 @@ export const STRINGS = {
       competenciesTitle: 'Как устроены компетенции',
       competencies: 'Компетенция — группа тем классификации OpenAlex (около 4500 тем, которые OpenAlex присваивает работам автоматически по названию, аннотации, ссылкам и журналу). Темы отнесены к компетенциям по правилам из файла content/competencies.mjs: по области и подобласти темы и по ключевым словам в её названии. Каждая тема входит не больше чем в одну компетенцию; мировой поток компетенции — сумма мировых публикаций по всем её темам.',
       competencyTopics: (n, m) => `тем в составе: ${n}, из них с публикациями университета: ${m}`,
-      coverage: (o) => `В компетенции попали ${o.assigned} из ${o.classified} публикаций университета, которым OpenAlex присвоил тему (${o.share}); ещё у ${o.unclassified} публикаций темы нет.`,
+      coverage: (o) => `В компетенции попали ${o.assigned} из ${o.classified} публикаций университета, которым OpenAlex присвоил тему (${o.share}); ещё у ${o.unclassified} ${plural('ru', o.unclassifiedN, ['публикации', 'публикаций', 'публикаций'])} темы нет.`,
       unassignedTitle: 'Темы университета вне компетенций',
       limitsTitle: 'Ограничения',
       limits: [
@@ -304,6 +307,7 @@ export const STRINGS = {
       pish: 'PISH: the bet',
       competencies: 'Competencies',
       trends: 'World trends',
+      'industry-index': 'Industry index',
       collaboration: 'Collaboration',
       method: 'Methodology',
     },
@@ -413,6 +417,7 @@ export const STRINGS = {
       mapXShort: 'Specialisation, world = 1',
       mapYRef: 'world average',
       mapAria: 'Bubble chart: specialisation index and field-weighted citation impact by competency',
+      mapNote: (cap) => `A hollow circle is a mixed OpenAlex cluster that pools unrelated tasks, so a high specialisation index there does not mean leadership in a field. Values above ${cap} sit in the band on the right; the real number is in the label.`,
       cardsTitle: 'Competencies',
       cardsLead: (min) => `Areas with at least ${min} university publications, ordered by specialisation index.`,
       dynamicsTitle: 'Publication trends',

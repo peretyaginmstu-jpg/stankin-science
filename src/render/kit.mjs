@@ -19,6 +19,15 @@ export function rel(fromDir, target) {
   return out || './';
 }
 
+export const FORMS = Object.freeze({
+  works: { ru: ['работа', 'работы', 'работ'], en: ['work', 'works'] },
+  newWorks: { ru: ['новая работа', 'новые работы', 'новых работ'], en: ['recent work', 'recent works'] },
+  topics: { ru: ['тема', 'темы', 'тем'], en: ['topic', 'topics'] },
+  publications: { ru: ['публикация', 'публикации', 'публикаций'], en: ['publication', 'publications'] },
+  fields: { ru: ['направление', 'направления', 'направлений'], en: ['field', 'fields'] },
+  groups: { ru: ['группа', 'группы', 'групп'], en: ['group', 'groups'] },
+});
+
 export function makeContext({ lang, model, competencies, taxonomyRu, route, pageDir, site, institution }) {
   const t = STRINGS[lang];
   const prefix = langPrefix(lang);
@@ -54,6 +63,8 @@ export function makeContext({ lang, model, competencies, taxonomyRu, route, page
     worksWord: (n) => (lang === 'ru' ? F.plural('ru', n, ['публикация', 'публикации', 'публикаций']) : n === 1 ? 'publication' : 'publications'),
   };
   ctx.worksN = (n) => `${ctx.int(n)} ${ctx.worksWord(n)}`;
+  // Число с согласованным существительным: ctx.count(17, FORMS.topics) → «17 тем» / «17 topics».
+  ctx.count = (n, forms) => `${ctx.int(n)} ${lang === 'ru' ? F.plural('ru', n, forms.ru) : n === 1 ? forms.en[0] : forms.en[1]}`;
   return ctx;
 }
 
@@ -129,6 +140,13 @@ export function workItem(ctx, w, { source } = {}) {
 export function rankText(ctx, r) {
   if (!r) return '—';
   return r.bound ? ctx.t.ui.rankBound(r.rank) : r.exact ? ctx.t.ui.rank(r.rank) : ctx.t.ui.rankOutside(r.listed);
+}
+
+// Короткая форма места для таблиц: «№ 7», «≥ 104», «> 197» (полная форма — в подсказке и на странице).
+export function rankShort(ctx, r) {
+  if (!r) return '—';
+  if (r.bound) return `≥ ${ctx.int(r.rank)}`;
+  return r.exact ? ctx.t.ui.rank(r.rank) : `> ${ctx.int(r.listed)}`;
 }
 
 export function quadrantTag(ctx, q) {

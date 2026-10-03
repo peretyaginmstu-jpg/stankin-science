@@ -28,6 +28,7 @@ import { industryIndexPage, industryIndexSvg } from '../src/render/industry-inde
 import { buildWorldTrends } from '../src/lib/world-trends.mjs';
 import { worldTrendSvg } from '../src/render/world-trends.mjs';
 import { buildExplorer } from '../src/lib/explorer.mjs';
+import { buildBetEvidence } from '../src/lib/bet-evidence.mjs';
 import { pishPage, pishLoopSpec } from '../src/render/pish.mjs';
 import { pishAgendaSpecs } from '../src/render/pish-agenda.mjs';
 import { pishBetMapSpec, pishRoadmapSpec } from '../src/render/pish-bet.mjs';
@@ -141,6 +142,7 @@ async function main() {
   model.worldTrends = buildWorldTrends(snapshot, model);
   model.industryIndex = buildIndustryIndex(snapshot);
   model.thinkTank = buildThinkTank(snapshot, model);
+  model.betEvidence = buildBetEvidence(snapshot, model);
 
   // Дополнения для страниц: источники публикаций, английские названия классификации, состав компетенций.
   model.sources = snapshot.stankin.sources ?? {};
@@ -229,6 +231,7 @@ async function main() {
   await write('data/industry-index.json', `${JSON.stringify(industryIndex,null,2)}\n`);
   await write('data/world-trends.json', `${JSON.stringify(worldTrends)}\n`);
   await write('data/explorer.json', `${JSON.stringify(explorer)}\n`);
+  await write('data/bet-evidence.json', `${JSON.stringify(model.betEvidence, null, 1)}\n`);
   await write('data/metrics.json', `${JSON.stringify({ ...exportable, competencyTopics, competencyNames: Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.name])) }, null, 1)}\n`);
   await write('data/strategy.json', `${JSON.stringify({ ...model.strategy, industrialTopics: model.industrialTopics }, null, 2)}\n`);
   await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES, bet: { reviewedAt: PISH_BET_REVIEWED_AT, bet: PISH_BET, reasons: PISH_BET_REASONS, options: PISH_BET_OPTIONS, boundary: PISH_BET_BOUNDARY, partners: PISH_BET_PARTNERS, timeline: PISH_BET_TIMELINE, risks: PISH_BET_RISKS }, agenda:{umbrella:PISH_TOPIC_UMBRELLA,families:PISH_TOPIC_FAMILIES,caveat:PISH_TOPIC_METHOD_CAVEAT} }, null, 2)}\n`);

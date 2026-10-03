@@ -1,4 +1,5 @@
 import { esc, figure, table, cell, text } from './kit.mjs';
+import { betEvidenceBlock } from './bet-evidence.mjs';
 import { pishBetMap, pishFundingChart, pishSubmissionPath, pishRoadmapChart } from '../charts/pish-bet.mjs';
 import { PISH_SOURCES, PISH_MINIMUMS, PISH_REQUIREMENTS } from '../../content/pish.mjs';
 import { PISH_BET, PISH_BET_REASONS, PISH_BET_CRITERIA, PISH_BET_OPTIONS, PISH_BET_BOUNDARY, PISH_BET_WORKPACKAGES, PISH_BET_PARTNERS, PISH_BET_TIMELINE, PISH_BET_RISKS, PISH_BET_FUNDING_CONTEXT } from '../../content/pish-bet.mjs';
@@ -170,6 +171,7 @@ export function betSection(ctx) {
   const body = `<div class="pish-bet-hero"><div><p class="eyebrow">${esc(L(ctx, 'Рекомендуемая ставка', 'Recommended bet'))}</p><h3>${esc(phrase(ctx, PISH_BET.title))}</h3><p>${esc(phrase(ctx, PISH_BET.thesis))}</p></div><dl><div><dt>${esc(L(ctx, 'Продукт', 'Product'))}</dt><dd>${esc(phrase(ctx, PISH_BET.product))}</dd></div><div><dt>${esc(L(ctx, 'Научный вопрос', 'Research question'))}</dt><dd>${esc(phrase(ctx, PISH_BET.scienceQuestion))}</dd></div></dl></div>
 ${map}
 <h3 class="pish-subhead">${esc(L(ctx, 'Почему именно эта ставка', 'Why this bet'))}</h3>${reasons}
+${betEvidenceBlock(ctx)}
 <h3 class="pish-subhead">${esc(L(ctx, 'Сравнение с другими вариантами', 'Comparison with other options'))}</h3>${optionsMatrix(ctx)}
 <h3 class="pish-subhead">${esc(L(ctx, 'Главный фильтр — деньги заказчика', 'The main filter is customer money'))}</h3><p class="pish-bet-lead">${esc(L(ctx, `Приложение 10 требует привлечь на НИОКР в интересах бизнеса не меньше ${rnd31 == null ? '—' : ctx.int(rnd31)} млн ₽ к 2031 году и ${rnd34 == null ? '—' : ctx.int(rnd34)} млн ₽ к 2034 году нарастающим итогом. В 2030–2033 годах это 260–300 млн ₽ в год — около половины всех нынешних поступлений университета от НИОКР, услуг и работ. Поэтому сначала выбираем заказчика, у которого есть такой бюджет и острая задача, а уже под него уточняем продукт.`, `Annex 10 requires at least RUB ${rnd31 == null ? '—' : ctx.int(rnd31)} million of business-oriented R&D by 2031 and RUB ${rnd34 == null ? '—' : ctx.int(rnd34)} million by 2034, cumulatively. In 2030–2033 that is RUB 260–300 million a year — about half of all current university receipts from R&D, services and other work. So choose the customer with such a budget and an urgent task first, then refine the product for it.`))}</p>${fund}${sourceRefs(ctx, ['pish-call-2026', 'self-assessment-2025-finance'])}
 <div class="pish-bet-condition"><div><span class="pish-pill pish-pill-conditional">${esc(L(ctx, 'Условие ставки', 'Condition'))}</span><p>${esc(phrase(ctx, PISH_BET.condition))}</p></div><div><span class="pish-pill">${esc(L(ctx, 'Запасной вариант', 'Fallback'))}</span><p>${esc(phrase(ctx, PISH_BET.fallback))}</p></div></div>

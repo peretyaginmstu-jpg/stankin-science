@@ -2,7 +2,7 @@
 // Coordinates encode real cohort values; unknown values remain unplotted.
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const finite = v => v != null && Number.isFinite(v);
-const fmt = (lang,v,d=2) => finite(v) ? new Intl.NumberFormat(lang === 'en' ? 'en-GB' : 'ru-RU',{maximumFractionDigits:d}).format(v) : '—';
+const fmt = (lang,v,d=2) => finite(v) ? new Intl.NumberFormat(lang === 'en' ? 'en-GB' : 'ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v).replace(/^-/,'−') : '—';
 const tx = (x,y,s,a='') => `<text x="${x}" y="${y}" ${a}>${esc(s)}</text>`;
 function lines(s,n) {
   const words = String(s ?? '').split(/\s+/); const out=[]; let line='';
@@ -118,10 +118,10 @@ export function cohortsChart(spec = {}, width = 1160) {
       out.push(`<line x1="${X(a)}" x2="${X(b)}" y1="${y}" y2="${y}" class="pish-connector${down?' pish-connector-down':''}"/>`);
       const sign=b>=a?1:-1;out.push(`<path d="M${X(b)-sign*8},${y-4} L${X(b)},${y} L${X(b)-sign*8},${y+4}" fill="none" stroke="${down?'#b4432d':'#2f6db5'}" stroke-width="1.5"/>`);
     }
-    if(finite(a))out.push(`<circle cx="${X(a)}" cy="${y}" r="6" class="pish-cohort-before"/>`,tx(X(a),y-12,fmt(lang,a,3),'font-size="10.5" class="pish-muted" text-anchor="middle"'));
-    if(finite(b))out.push(`<circle cx="${X(b)}" cy="${y}" r="6" class="pish-cohort-after${down?' pish-cohort-down':''}"/>`,tx(X(b),y+21,fmt(lang,b,3),'font-size="10.5" font-weight="600" text-anchor="middle"'));
+    if(finite(a))out.push(`<circle cx="${X(a)}" cy="${y}" r="6" class="pish-cohort-before"/>`,tx(X(a),y-12,fmt(lang,a,2),'font-size="10.5" class="pish-muted" text-anchor="middle"'));
+    if(finite(b))out.push(`<circle cx="${X(b)}" cy="${y}" r="6" class="pish-cohort-after${down?' pish-cohort-down':''}"/>`,tx(X(b),y+21,fmt(lang,b,2),'font-size="10.5" font-weight="600" text-anchor="middle"'));
     if(!finite(a)||!finite(b))out.push(tx(labelW+4,y+38,en?'No value for this period':'Нет данных за это пятилетие','font-size="10" class="pish-muted"'));
-    if(!narrow)out.push(tx(w-10,y+3,`${fmt(lang,a,3)} → ${fmt(lang,b,3)}`,'font-size="12" font-weight="600" text-anchor="end"'));
+    if(!narrow)out.push(tx(w-10,y+3,`${fmt(lang,a,2)} → ${fmt(lang,b,2)}`,'font-size="12" font-weight="600" text-anchor="end"'));
     out.push(`</${r.href?'a':'g'}></g>`);
   });
   return (out.join('')+'</svg>').replaceAll('2016–2020',p1Label).replaceAll('2021–2025',p2Label);
@@ -132,7 +132,7 @@ export function cohortsChart(spec = {}, width = 1160) {
 export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false } = {}) {
   const { rows = [], topics = [], lang = 'ru' } = spec;
   const en=lang==='en',w=Math.max(360,Number.isFinite(width)?Math.round(width):1160),narrow=w<800;
-  const delta=v=>finite(v)?`${v>0?'+':''}${new Intl.NumberFormat(en?'en-GB':'ru-RU',{style:'percent',maximumFractionDigits:1}).format(v)}`:'—';
+  const delta=v=>{if(!finite(v))return '—';const r=Math.round(v*1000)/1000;return `${r>0?'+':r<0?'−':''}${new Intl.NumberFormat(en?'en-GB':'ru-RU',{style:'percent',maximumFractionDigits:1}).format(Math.abs(r))}`;};
   const state=r=>['strong','base'].includes(r.status)?'base':['strengthen','build','gap'].includes(r.status)?'build':['review','watch'].includes(r.status)?'review':'unknown';
   const stateText=r=>({base:en?'Our research base':'Своя научная опора',build:en?'Needs strengthening':'Нужно усилить',review:en?'Inspect a narrower topic':'Проверить узкую тему',unknown:en?'Check the evidence':'Проверить данные'})[state(r)];
   const stateColour=r=>({base:'#2b7e75',build:'#2f6db5',review:'#b4432d',unknown:'#8b877d'})[state(r)];
@@ -153,9 +153,9 @@ export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false
       out.push(`<rect x="18" y="${y}" width="${w-36}" height="159" rx="5" class="pish-node-box"/><rect x="18" y="${y}" width="4" height="159" rx="2" fill="${stateColour(r)}"/>`);
       const nameLines=lines(label(r),32);const bodyY=y+27+nameLines.length*18;
       out.push(multiline(31,y+24,label(r),32,18,'font-size="14" font-weight="600"'));
-      out.push(tx(31,bodyY,`${en?'World-share change':'Изменение мировой доли'} ${delta(r.worldShareChange)} · FWCI ${fmt(lang,r.fwciP2,3)}`,'font-size="12"'));
+      out.push(tx(31,bodyY,`${en?'World-share change':'Изменение мировой доли'} ${delta(r.worldShareChange)} · FWCI ${fmt(lang,r.fwciP2,2)}`,'font-size="12"'));
       out.push(tx(31,bodyY+22,`${en?'STANKIN works':'Работы СТАНКИН'} ${fmt(lang,r.nP1,0)} → ${fmt(lang,r.nP2,0)}`,'font-size="11.5" class="pish-muted"'));
-      if(finite(r.fwciLow)&&finite(r.fwciHigh))out.push(tx(31,bodyY+41,`95%: ${fmt(lang,r.fwciLow,3)} … ${fmt(lang,r.fwciHigh,3)}`,'font-size="10.5" class="pish-muted"'));
+      if(finite(r.fwciLow)&&finite(r.fwciHigh))out.push(tx(31,bodyY+41,`95%: ${fmt(lang,r.fwciLow,2)} … ${fmt(lang,r.fwciHigh,2)}`,'font-size="10.5" class="pish-muted"'));
       out.push(tx(31,y+145,stateText(r),'font-size="11" font-weight="600"'),closeLink(r));
     });
   } else {
@@ -175,7 +175,7 @@ export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false
     const chips=[];
     [...valid].sort((a,b)=>(b.nP2??0)-(a.nP2??0)).forEach(r=>{
       const cx=X(r.worldShareChange),cy=Y(r.fwciP2),radius=finite(r.nP2)&&r.nP2>0?Math.sqrt(r.nP2/maxN)*27:0;
-      const title=`${label(r)}. ${en?'World-share change':'Изменение мировой доли'} ${delta(r.worldShareChange)}; FWCI ${fmt(lang,r.fwciP2,3)}; n=${fmt(lang,r.nP2,0)}. ${stateText(r)}.`;
+      const title=`${label(r)}. ${en?'World-share change':'Изменение мировой доли'} ${delta(r.worldShareChange)}; FWCI ${fmt(lang,r.fwciP2,2)}; n=${fmt(lang,r.nP2,0)}. ${stateText(r)}.`;
       out.push(`<g><title>${esc(title)}</title>`);
       if(finite(r.fwciLow)&&finite(r.fwciHigh)&&r.fwciLow>=0&&r.fwciHigh>=r.fwciLow)out.push(`<path d="M${cx},${Y(r.fwciLow)}V${Y(r.fwciHigh)}M${cx-5},${Y(r.fwciLow)}H${cx+5}M${cx-5},${Y(r.fwciHigh)}H${cx+5}" stroke="${stateColour(r)}" stroke-width="1.5" fill="none"/>`);
       if(radius>0)out.push(`<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${stateColour(r)}" fill-opacity=".77" stroke="#fbf9f4" stroke-width="1.5"/>`);
@@ -191,7 +191,7 @@ export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false
       out.push(openLink(r));
       out.push(`<g><title>${esc(label(r))}</title>`,tx(keyX,y+10,String(i+1).padStart(2,'0'),'font-size="10.5" font-weight="600" class="pish-muted"'));
       out.push(multiline(keyX+32,y+10,label(r),37,15,'font-size="12" font-weight="600"'));
-      out.push(tx(keyX+32,y+39,`FWCI ${fmt(lang,r.fwciP2,3)} · n=${fmt(lang,r.nP2,0)} · ${delta(r.worldShareChange)}`,'font-size="10.5" class="pish-muted"'));
+      out.push(tx(keyX+32,y+39,`FWCI ${fmt(lang,r.fwciP2,2)} · n=${fmt(lang,r.nP2,0)} · ${delta(r.worldShareChange)}`,'font-size="10.5" class="pish-muted"'));
       out.push(tx(keyX+32,y+53,stateText(r),'font-size="10"'));
       out.push('</g>',closeLink(r));
     });
