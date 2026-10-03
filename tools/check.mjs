@@ -12,7 +12,7 @@ import { readFile, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { SITE } from '../config/site.mjs';
 import { createHash } from 'node:crypto';
-import { verifyPlotIntegrity } from './plot-integrity.mjs';
+import { verifyPlotIntegrity, verifyThinkTankPlots } from './plot-integrity.mjs';
 
 const args = process.argv.slice(2);
 const dir = path.resolve(args.includes('--dir') ? args[args.indexOf('--dir') + 1] : 'dist');
@@ -63,7 +63,7 @@ async function main() {
   if (explorer.schema !== 1 || explorer.totalWorks !== pish.totalWorks || explorer.fetchedAt !== pish.fetchedAt) fail('Интерактивная карта относится к другому снимку данных.');
   if (!explorer.checks?.length) fail('Нет численного аудита интерактивной карты.');
   else for (const check of explorer.checks) if (!check.passed) fail(`Не сошлась проверка интерактивной карты: ${check.id}`);
-  for (const name of ['world-trends','industry-index']) {
+  for (const name of ['world-trends','industry-index','think-tank']) {
     const data = JSON.parse(await readFile(path.join(dir,`data/${name}.json`),'utf8'));
     if (data.schema !== 1 || data.totalWorks !== pish.totalWorks || data.fetchedAt !== pish.fetchedAt) fail(`Другой корпус: ${name}`);
     if (!data.checks?.length || data.checks.some(check=>!check.passed)) fail(`Ошибка численного аудита: ${name}`);
@@ -78,6 +78,8 @@ async function main() {
   if (build.pythonPlots) {
     const generatorSha = createHash('sha256').update(await readFile(new URL('./scientific-plots.py',import.meta.url))).digest('hex');
     for (const error of await verifyPlotIntegrity(dir,pish,generatorSha)) fail(error);
+    const thinkGenerator = createHash('sha256').update(await readFile(new URL('./think-tank-plots.py',import.meta.url))).digest('hex');
+    for (const error of await verifyThinkTankPlots(dir,thinkGenerator)) fail(error);
   }
   const auditChecks = pish.mathAudit?.checks;
   if (!Array.isArray(auditChecks) || auditChecks.length === 0) fail('Нет численного аудита научных показателей.');

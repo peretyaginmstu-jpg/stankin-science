@@ -76,6 +76,20 @@ test('выгрузка, сборка и проверка на имитации A
       assert.ok(page.includes('pish-node-topic-physics-with-learned-correction'));
       for(const type of ['pish-landscape','pish-topic-tree','pish-research-paths']) assert.ok(page.includes(`data-chart="${type}"`),'new charts register their responsive renderer');
     }
+    const think = JSON.parse(await readFile(path.join(out, 'data/think-tank.json'), 'utf8'));
+    assert.equal(think.totalWorks, snap.stankin.works.length);
+    assert.equal(think.directions.length, 8);
+    assert.ok(think.checks.every(c => c.passed));
+    for (const [locale, route] of [['ru','think-tank/'],['en','en/think-tank/']]) {
+      const page = await readFile(path.join(out, route, 'index.html'), 'utf8');
+      assert.ok(page.includes('noindex, nofollow'));
+      for (const marker of ['data-think-tank','data-tt-projector','data-tt-print','data-tt-scenario','data-tt-static']) assert.ok(page.includes(marker), marker);
+      assert.match(page, /<table/); // Numeric evidence remains available without JavaScript.
+      for (const direction of think.directions) assert.ok(page.includes(`tt-direction-${direction.id}`));
+      const diagram = await readFile(path.join(out, `data/think-tank-${locale}.svg`), 'utf8');
+      assert.match(diagram, /<svg/);
+      assert.ok(!diagram.includes('undefined') && !diagram.includes('NaN'));
+    }
     const checked = await run('node', [path.join(ROOT, 'tools/check.mjs'), '--dir', out, '--publish'], { cwd: ROOT });
     assert.match(checked.stdout, /Проверка пройдена/);
   } finally {

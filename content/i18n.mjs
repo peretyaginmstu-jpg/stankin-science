@@ -18,6 +18,7 @@ export const STRINGS = {
       description: 'Научные компетенции МГТУ «СТАНКИН» в контексте мировой науки: специализация, цитируемость и место среди организаций России и мира по открытым данным OpenAlex.',
     },
     nav: {
+      'think-tank': 'Think Tank',
       home: 'Обзор',
       decisions: 'Куда развиваться',
       pish: 'ПИШ: выбор темы',
@@ -297,6 +298,7 @@ export const STRINGS = {
       description: 'Research competencies of MSTU STANKIN in the context of world science: specialisation, citation impact and standing among institutions in Russia and worldwide, based on open OpenAlex data.',
     },
     nav: {
+      'think-tank': 'Think Tank',
       home: 'Overview',
       decisions: 'Development',
       pish: 'Engineering school',

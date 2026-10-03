@@ -113,6 +113,8 @@ jobs:
         run: |
           python tools/test-scientific-plots.py
           python tools/scientific-plots.py --data dist/data/pish.json --metrics dist/data/metrics.json --out dist/data/science-plots
+          python tools/test-think-tank-plots.py
+          python tools/think-tank-plots.py --data dist/data/think-tank.json --out dist/data/think-tank-plots
 
       - name: Проверка сборки
         run: node tools/check.mjs --dir dist --publish

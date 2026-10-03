@@ -6,6 +6,7 @@ import { LANGS } from '../../content/i18n.mjs';
 const NAV = [
   ['home', ''],
   ['decisions', 'decisions/'],
+  ['think-tank', 'think-tank/'],
   ['pish', 'pish/'],
   ['competencies', 'competencies/'],
   ['trends', 'trends/'],
@@ -70,6 +71,7 @@ ${alternates}
 <link rel="preload" href="${esc(ctx.asset(`assets/fonts/golos-text-variable-${lang === 'ru' ? 'cyrillic' : 'latin'}.woff2`))}" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/site.css'))}">
 <link rel="stylesheet" href="${esc(versionedAsset('assets/css/strategy.css'))}">
+${routeKey === 'think-tank' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/think-tank.css'))}">` : ''}
 ${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/pish.css'))}">` : ''}
 ${routeKey === 'pish' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/explorer.css'))}">` : ''}
 ${routeKey === 'trends' || routeKey === 'industry-index' ? `<link rel="stylesheet" href="${esc(versionedAsset('assets/css/world-trends.css'))}">` : ''}

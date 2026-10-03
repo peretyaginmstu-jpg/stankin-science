@@ -35,3 +35,23 @@ test('графики нельзя публиковать с изменённым
     assert.ok((await verifyPlotIntegrity(dir,{...pish,totalWorks:2857})).some(error=>error.includes('другому снимку')));
   } finally { await rm(dir,{recursive:true,force:true}); }
 });
+
+test('Think Tank figures must match institutional evidence, scientific data and generator', async () => {
+  const {THINK_TANK_PLOT_FILES,verifyThinkTankPlots}=await import('../tools/plot-integrity.mjs');
+  const dir=await mkdtemp(path.join(tmpdir(),'think-plots-')),folder=path.join(dir,'data/think-tank-plots');
+  const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+  try {
+    await mkdir(folder,{recursive:true});
+    const data=Buffer.from(JSON.stringify({totalWorks:2856,fetchedAt:'2026-10-02'}));
+    await writeFile(path.join(dir,'data/think-tank.json'),data);
+    const manifest={schema:1,totalWorks:2856,fetchedAt:'2026-10-02',inputs:{data:{sha256:hash(data)},generator:{sha256:'current'}},files:[]};
+    for(const name of THINK_TANK_PLOT_FILES){const bytes=Buffer.from('fixture '+name);await writeFile(path.join(folder,name),bytes);manifest.files.push({name,bytes:bytes.length,sha256:hash(bytes)});}
+    await writeFile(path.join(folder,'manifest.json'),JSON.stringify(manifest));
+    assert.deepEqual(await verifyThinkTankPlots(dir,'current'),[]);
+    assert.ok((await verifyThinkTankPlots(dir,'old')).some(e=>e.includes('генератор')));
+    await writeFile(path.join(dir,'data/think-tank.json'),Buffer.concat([data,Buffer.from('\n')]));
+    assert.ok((await verifyThinkTankPlots(dir,'current')).some(e=>e.includes('Данные')));
+    await writeFile(path.join(folder,THINK_TANK_PLOT_FILES[0]),'broken');
+    assert.ok((await verifyThinkTankPlots(dir,'current')).some(e=>e.includes('Повреждён')));
+  } finally {await rm(dir,{recursive:true,force:true});}
+});

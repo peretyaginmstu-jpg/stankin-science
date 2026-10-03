@@ -21,6 +21,8 @@ import { buildStrategy } from '../src/lib/strategy.mjs';
 import { buildIndustrialTopics } from '../content/topic-lenses.mjs';
 import { decisionsPage } from '../src/render/strategy.mjs';
 import { buildPishModel } from '../src/lib/pish.mjs';
+import { buildThinkTank } from '../src/lib/think-tank.mjs';
+import { thinkTankPage, thinkTankOverviewSvg } from '../src/render/think-tank.mjs';
 import { buildIndustryIndex } from '../src/lib/industry-index.mjs';
 import { industryIndexPage, industryIndexSvg } from '../src/render/industry-index.mjs';
 import { buildWorldTrends } from '../src/lib/world-trends.mjs';
@@ -71,6 +73,7 @@ const JS_MODULES = [
   ['src/assets/js/site.mjs','assets/js/site.mjs'],
   ['src/assets/js/explorer.mjs','assets/js/explorer.mjs'],
   ['src/assets/js/world-trends.mjs','assets/js/world-trends.mjs'],
+  ['src/assets/js/think-tank.mjs','assets/js/think-tank.mjs'],
   ['src/charts/charts.mjs','assets/js/charts/charts.mjs'],
   ['src/charts/strategy.mjs','assets/js/charts/strategy.mjs'],
   ['src/charts/pish.mjs','assets/js/charts/pish.mjs'],
@@ -80,7 +83,7 @@ const JS_MODULES = [
 ];
 
 async function assetVersion() {
-  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css','src/assets/css/pish.css','src/assets/css/explorer.css','src/assets/css/world-trends.css','src/assets/vendor/echarts/metadata.json'];
+  const files = [...JS_MODULES.map(([source])=>source),'src/assets/css/site.css','src/assets/css/strategy.css','src/assets/css/pish.css','src/assets/css/explorer.css','src/assets/css/world-trends.css','src/assets/css/think-tank.css','src/assets/vendor/echarts/metadata.json'];
   const contents = await Promise.all(files.map(file=>readFile(path.join(ROOT,file))));
   const hash = createHash('sha256');
   for (const content of contents) hash.update(content);
@@ -133,6 +136,7 @@ async function main() {
   model.explorer = buildExplorer(snapshot, model);
   model.worldTrends = buildWorldTrends(snapshot, model);
   model.industryIndex = buildIndustryIndex(snapshot);
+  model.thinkTank = buildThinkTank(snapshot, model);
 
   // Дополнения для страниц: источники публикаций, английские названия классификации, состав компетенций.
   model.sources = snapshot.stankin.sources ?? {};
@@ -177,11 +181,13 @@ async function main() {
     }
     await render('trends', 'trends/', t.trends.title, t.trends.lead, (ctx) => trendsPage(ctx));
     await render('industry-index', 'industry-index/', lang === 'ru' ? 'Отраслевой индекс университета' : 'University industry index', null, industryIndexPage);
+    await render('think-tank', 'think-tank/', lang === 'ru' ? 'Think Tank: научные приоритеты' : 'Think Tank: research priorities', lang === 'ru' ? 'Научные приоритеты СТАНКИН внутри станкоинструментальной отрасли: изменения за пять лет и варианты развития до 2030 и 2036 года.' : 'STANKIN research priorities within the machine-tool industry: five years of change and options towards 2030 and 2036.', thinkTankPage);
     await render('decisions', 'decisions/', t.nav.decisions, t.site.description, decisionsPage);
     await render('pish', 'pish/', t.nav.pish, lang === 'ru' ? 'Какую новую ПИШ предложить СТАНКИН: что показывают исследования, что требуется по конкурсу и какой продукт нужен заказчику.' : 'Choosing a new STANKIN engineering school: what research shows, what the competition requires and what product the customer needs.', pishPage);
     const diagramCtx = makeContext({ lang, model, competencies: COMPETENCIES, taxonomyRu: TAXONOMY, route: 'pish', pageDir: prefix + 'pish/', site: SITE, institution: INSTITUTION });
     await write(`data/world-trends-${lang}.svg`, worldTrendSvg(diagramCtx,{standalone:true}));
     await write(`data/industry-index-${lang}.svg`, industryIndexSvg(diagramCtx,{standalone:true}));
+    await write(`data/think-tank-${lang}.svg`, thinkTankOverviewSvg(diagramCtx,{standalone:true}));
     const diagramSpec = pishLoopSpec(diagramCtx);
     const pagesOwner = new URL(SITE.repoUrl).pathname.split('/').filter(Boolean)[0];
     const diagramPageUrl = `https://${pagesOwner}.github.io${base}${prefix}pish/`;
@@ -212,7 +218,8 @@ async function main() {
   }
 
   // Данные для загрузки
-  const { competencyTopics, explorer, worldTrends, industryIndex, ...exportable } = model;
+  const { competencyTopics, explorer, worldTrends, industryIndex, thinkTank, ...exportable } = model;
+  await write('data/think-tank.json', `${JSON.stringify(thinkTank,null,2)}\n`);
   await write('data/industry-index.json', `${JSON.stringify(industryIndex,null,2)}\n`);
   await write('data/world-trends.json', `${JSON.stringify(worldTrends)}\n`);
   await write('data/explorer.json', `${JSON.stringify(explorer)}\n`);

@@ -1,6 +1,7 @@
 // Поведение страниц: меню, перерисовка графиков под ширину блока, подсказки, сортировка таблиц.
 // Без JavaScript сайт остаётся рабочим: графики нарисованы при сборке, данные есть в таблицах.
 
+import { initThinkTank } from './think-tank.mjs';
 import { initWorldTrends } from './world-trends.mjs';
 import { initExplorer } from './explorer.mjs';
 import { RENDERERS } from './charts/charts.mjs';
@@ -28,7 +29,7 @@ if (toggle) {
       toggle.focus();
     }
   });
-  window.matchMedia('(min-width: 961px)').addEventListener('change', (e) => e.matches && set(false));
+  window.matchMedia('(min-width: 1181px)').addEventListener('change', (e) => e.matches && set(false));
 }
 
 // ---------- подсказки ----------
@@ -403,3 +404,5 @@ for (const root of document.querySelectorAll("[data-world-trends]")) {
     observer.observe(root);
   } else initWorldTrends(root);
 }
+
+for (const root of document.querySelectorAll('[data-think-tank]')) initThinkTank(root);
