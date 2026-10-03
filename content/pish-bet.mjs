@@ -310,6 +310,12 @@ export const PISH_BET_RISKS = [
     response: L('Инструмент — только объект испытаний; таблица границ; раздельный учёт РИД', 'Tools only as test objects; a boundary table; separate IP records'),
   },
   {
+    id: 'thin-base',
+    risk: L('Научная опора тоньше, чем показывает средний FWCI', 'The research base is thinner than the mean FWCI suggests'),
+    signal: L('Медиана ядра заметно ниже среднего; в резании собственные работы ниже мирового уровня, а среднее поднимают работы партнёров', 'The core median is well below its mean; in machining, university-led works sit below world level and partner-led works lift the mean'),
+    response: L('В заявке опираться на конкретные работы, людей и стенды, а не на среднее; к 2028 году — совместные статьи и РИД с заказчиком и партнёром по управлению', 'Build the application on named works, people and test benches rather than on a mean; by 2028, joint papers and IP with the customer and the control partner'),
+  },
+  {
     id: 'cnc',
     risk: L('Нет доступа к управлению станком', 'No access to machine control'),
     signal: L('Разработчик ЧПУ не открывает интерфейс коррекции', 'The CNC developer will not open a correction interface'),
