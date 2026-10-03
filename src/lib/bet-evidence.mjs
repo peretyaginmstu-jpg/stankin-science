@@ -12,6 +12,7 @@
 //     (в снимке нет идентификаторов авторов — это приближение по написанию имени).
 
 import { bootstrapMeanCI95, stableSeed } from './stats.mjs';
+import { MASS_PROCEEDINGS, RU_TRANSLATED, RU_TRANSLATED_PUBLISHER, RU_PUBLISHER, PROCEEDINGS_NAME, PROCEEDINGS_DOI, VENUE_CLASSES } from '../../content/venue-classes.mjs';
 
 export const BET_CORE = Object.freeze(['machining', 'metrology-quality']);
 export const BET_GAPS = Object.freeze(['machine-tools-control', 'condition-monitoring', 'ai-data']);
@@ -98,6 +99,18 @@ export function cohortEvidence(list, { seedKey, ownIds, institutions, home = 'RU
   };
 }
 
+// Класс площадки работы (content/venue-classes.mjs). sources — справочник источников снимка.
+export function venueClass(w, sources) {
+  const src = w.s ? sources[w.s] : null;
+  if (!src) return PROCEEDINGS_DOI.test(w.doi ?? '') ? 'ieee-spie' : 'other';
+  const name = src.name ?? '';
+  if (MASS_PROCEEDINGS.test(name)) return 'mass-proceedings';
+  if (RU_TRANSLATED.test(name) || RU_TRANSLATED_PUBLISHER.test(src.publisher ?? '')) return 'ru-translated';
+  if (src.type === 'conference' || src.type === 'book series' || PROCEEDINGS_NAME.test(name)) return 'proceedings';
+  if (w.lang === 'ru' || !src.publisher || RU_PUBLISHER.test(src.publisher)) return 'ru-domestic';
+  return 'intl-journal';
+}
+
 export function buildBetEvidence(snapshot, model) {
   const period = snapshot.config.period;
   const home = model.meta?.home ?? 'RU';
@@ -163,6 +176,16 @@ export function buildBetEvidence(snapshot, model) {
     companies: [...companies.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)),
   };
 
+  // Площадки: доля работ и цитирование по классам (новое пятилетие) и типы документов.
+  const sources = snapshot.stankin.sources ?? {};
+  const venues = {
+    classes: VENUE_CLASSES.map((c) => {
+      const list = recent.filter((w) => venueClass(w, sources) === c.id);
+      return { id: c.id, share: round(ratio(list.length, recent.length)), ...citationSummary(list) };
+    }).filter((c) => c.n > 0),
+    types: ['article', 'conference-paper', 'book-chapter', 'review'].map((type) => ({ type, nAll: works.filter((w) => w.ty === type).length, shareAll: round(ratio(works.filter((w) => w.ty === type).length, works.length)), shareP2: round(ratio(recent.filter((w) => w.ty === type).length, recent.length)) })),
+  };
+
   return {
     schema: 1,
     period: structuredClone(period),
@@ -173,12 +196,14 @@ export function buildBetEvidence(snapshot, model) {
       company: 'Co-authorship with any OpenAlex institution of type "company" other than the university.',
       firstAuthors: 'Distinct first-author names among STANKIN-led works; names, not author identifiers.',
       lens: 'Title keywords: machining terms AND at least one of measurement, monitoring, control or AI terms; independent of OpenAlex topics.',
+      venues: 'Venue classes from content/venue-classes.mjs: source name, publisher, work language and DOI prefix; approximate.',
     },
     rows,
     bundles,
     lens,
     international,
     industry,
+    venues,
   };
 }
 

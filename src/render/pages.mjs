@@ -5,6 +5,7 @@ import { esc, kpis, figure, legend, bubbleKey, table, cell, text, workItem, rank
 import { strategyBrief, competencyDecision, topicsSection } from './strategy.mjs';
 import { betBanner, siteGuide, betRole } from './guide.mjs';
 import { MIXED_COMPETENCY_IDS } from '../lib/strategy.mjs';
+import { VENUE_CLASSES } from '../../content/venue-classes.mjs';
 
 export const MAP_X_CAP = 64;
 
@@ -136,6 +137,42 @@ function competencyCards(ctx) {
   </article>`).join('')}</div>`;
 }
 
+// Типы документов: доклады конференций видны по типу работы, а не по типу источника.
+function venueTypes(ctx) {
+  const v = ctx.model.betEvidence?.venues;
+  if (!v) return '';
+  const names = ctx.lang === 'ru' ? { article: 'Статьи', 'conference-paper': 'Доклады конференций', 'book-chapter': 'Главы книг', review: 'Обзоры' } : { article: 'Articles', 'conference-paper': 'Conference papers', 'book-chapter': 'Book chapters', review: 'Reviews' };
+  return `<p class="side-title side-title-next">${esc(ctx.lang === 'ru' ? 'Типы работ' : 'Document types')}</p><ul class="kinds">${v.types.filter((x) => x.nAll > 0).map((x) => `<li><span>${esc(names[x.type] ?? x.type)}</span><strong>${esc(ctx.pct(x.shareAll, 0))}</strong></li>`).join('')}</ul>`;
+}
+
+// Цитирование по классам площадок (2021–2025): где работы университета замечают, а где нет.
+function venueImpact(ctx) {
+  const ev = ctx.model.betEvidence;
+  const v = ev?.venues;
+  if (!v?.classes?.length) return '';
+  const ru = ctx.lang === 'ru';
+  const p2 = `${ev.period.p2[0]}–${ev.period.p2[1]}`;
+  const names = Object.fromEntries(VENUE_CLASSES.map((c) => [c.id, ru ? c.ru : c.en]));
+  const rows = [...v.classes].sort((a, b) => (b.fwci ?? -1) - (a.fwci ?? -1));
+  const spec = {
+    lang: ctx.lang,
+    label: ru ? `Средний FWCI работ ${p2} по типу площадки` : `Mean FWCI of ${p2} works by venue type`,
+    max: Math.max(1.5, ...rows.map((r) => r.fwci ?? 0)),
+    items: rows.map((r) => ({ label: names[r.id] ?? r.id, value: r.fwci ?? 0, tone: (r.fwci ?? 0) >= 1 ? 'accent' : 'context', valueText: `${ctx.dec(r.fwci, 2)} · ${ctx.pct(r.share, 0)} ${ru ? 'работ' : 'of works'}`, tip: tip(names[r.id] ?? r.id, [[ctx.dec(r.fwci, 2), ru ? 'средний FWCI' : 'mean FWCI'], [ctx.dec(r.fwciMedian, 2), ru ? 'медиана' : 'median'], [ctx.pct(r.top10), ru ? 'в топ-10 %' : 'in the top 10%'], [ctx.int(r.n), ru ? 'работ' : 'works']]) })),
+  };
+  const low = rows.filter((r) => r.fwci != null && r.fwci < 0.5);
+  const lowShare = low.reduce((sum, r) => sum + (r.share ?? 0), 0);
+  const intl = rows.find((r) => r.id === 'intl-journal');
+  const dataTable = table(
+    [{ key: 'v', label: ru ? 'Площадка' : 'Venue' }, { key: 's', label: ru ? 'Доля работ' : 'Share of works', num: true }, { key: 'm', label: ru ? 'FWCI среднее' : 'Mean FWCI', num: true }, { key: 'md', label: ru ? 'Медиана' : 'Median', num: true }, { key: 't', label: ru ? 'Топ-10 %' : 'Top 10%', num: true }],
+    rows.map((r) => ({ cells: { v: text(names[r.id] ?? r.id), s: cell(ctx.pct(r.share, 1), r.share), m: cell(ctx.dec(r.fwci, 2), r.fwci), md: cell(ctx.dec(r.fwciMedian, 2), r.fwciMedian), t: cell(ctx.pct(r.top10), r.top10) } })),
+  );
+  const lead = ru
+    ? `${ctx.pct(lowShare, 0)} работ ${p2} выходят там, где средний FWCI ниже 0,5: в переводных и российских журналах и массовых сборниках.${intl ? ` В международных журналах — ${ctx.dec(intl.fwci, 2)}.` : ''} Смена площадок — самый быстрый рычаг цитирования, но он работает только вместе с содержанием.`
+    : `${ctx.pct(lowShare, 0)} of ${p2} works appear where mean FWCI is below 0.5: translated and Russian journals and mass proceedings.${intl ? ` In international journals it is ${ctx.dec(intl.fwci, 2)}.` : ''} Choosing venues is the fastest citation lever, but only together with content.`;
+  return `<h3 class="table-title table-title-gap">${esc(ru ? `Цитирование по типу площадки, ${p2}` : `Citation impact by venue type, ${p2}`)}</h3><p class="section-lead venue-lead">${esc(lead)}</p>${figure(ctx, { id: 'venue-impact', type: 'hbars', spec, svg: hbars(spec, 1160), wide: true, table: dataTable })}<p class="chart-foot">${esc(ru ? 'Класс площадки определяется по названию источника, издателю, языку и префиксу DOI — правила открыты в исходном коде сайта и приблизительны. FWCI: мир = 1.' : 'Venue classes come from the source name, publisher, language and DOI prefix; the rules are open in the site source code and approximate. FWCI: world = 1.')}</p>`;
+}
+
 // ---------- главная ----------------------------------------------------------------------
 
 export function homePage(ctx) {
@@ -203,9 +240,10 @@ export function homePage(ctx) {
   // Источники
   const kinds = Object.entries(model.venues.byKind);
   const kindNames = ctx.lang === 'ru'
-    ? { journal: 'Журналы', conference: 'Конференции', 'book series': 'Книжные серии', repository: 'Репозитории', ebook: 'Книги', 'ebook platform': 'Книги', none: 'Источник не указан', other: 'Другие' }
-    : { journal: 'Journals', conference: 'Conferences', 'book series': 'Book series', repository: 'Repositories', ebook: 'Books', 'ebook platform': 'Books', none: 'Source not recorded', other: 'Other' };
+    ? { journal: 'Журналы', conference: 'Конференции', 'book series': 'Книжные серии', repository: 'Репозитории', ebook: 'Книги', 'ebook platform': 'Книги', none: 'Без источника в OpenAlex (в основном доклады IEEE и SPIE)', other: 'Другие' }
+    : { journal: 'Journals', conference: 'Conferences', 'book series': 'Book series', repository: 'Repositories', ebook: 'Books', 'ebook platform': 'Books', none: 'No source in OpenAlex (mostly IEEE and SPIE proceedings)', other: 'Other' };
   const kindList = `<ul class="kinds">${kinds.map(([k, n]) => `<li><span>${esc(kindNames[k] ?? k)}</span><strong>${esc(ctx.pct(n / m.n, 0))}</strong></li>`).join('')}</ul>
+    ${venueTypes(ctx)}
     <p class="side-title side-title-next">${esc(t.home.venuesAccess)}</p>
     <ul class="kinds"><li><span>${esc(t.metric.oa)}</span><strong>${esc(ctx.pct(m.oa, 0))}</strong></li>
     <li><span>${esc(t.metric.english)}</span><strong>${esc(ctx.pct(model.venues.english, 0))}</strong></li></ul>`;
@@ -238,7 +276,7 @@ export function homePage(ctx) {
     section('site-guide', ctx.lang === 'ru' ? 'Что где смотреть' : 'Where to look', ctx.lang === 'ru' ? 'Каждый раздел отвечает на один вопрос. Числа везде пересчитываются из одного снимка OpenAlex.' : 'Each section answers one question. All numbers are recalculated from the same OpenAlex snapshot.', siteGuide(ctx), { cls: 'section-tight' }),
     section('map', t.home.mapTitle, t.home.mapLead, `${map}${quadrantGrid(ctx)}`),
     section('dynamics-section', t.home.dynamicsTitle, t.home.dynamicsLead(ctx.change(m.growthOwn), ctx.change(m.growthWorld), period.p1, period.p2), `<div class="grid-2">${dynamics}${perYear}</div>`),
-    section('venues-section', t.home.venuesTitle, t.home.venuesLead, `<div class="grid-side">${venues}<div class="side-box"><p class="side-title">${esc(t.home.venuesKinds)}</p>${kindList}</div></div>`),
+    section('venues-section', t.home.venuesTitle, t.home.venuesLead, `<div class="grid-side">${venues}<div class="side-box"><p class="side-title">${esc(t.home.venuesKinds)}</p>${kindList}</div></div>${venueImpact(ctx)}`),
     section('collab-section', t.home.collabTitle, t.home.collabLead, `<div class="grid-side">${collab}<div class="side-box">
       <ul class="side-stats">
         <li><strong>${esc(ctx.pct(m.intl))}</strong><span>${esc(t.metric.intl)}</span></li>

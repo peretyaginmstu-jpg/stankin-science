@@ -433,3 +433,4 @@ table.data tr.gap>*{padding:4px 12px;color:var(--muted);background:transparent}
 .key.key-led{width:10px;height:10px;border:2px solid var(--cool);background:transparent}
 .key.key-ci{width:18px;height:2px;background:var(--ink);opacity:.55}
 .table-title.table-title-gap{margin-top:30px!important}
+.venue-lead{margin:0 0 16px;max-width:860px}

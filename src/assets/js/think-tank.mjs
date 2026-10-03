@@ -61,6 +61,8 @@ export async function initThinkTank(root){
   root.dataset.plotted=String(list.length);
   const xs=list.map(d=>d.evidence.worldShareChange*100),ys=list.flatMap(d=>[cohort(d).fwci,cohort(d).fwciCI95?.upper]).filter(finite);
   let xmin=Math.min(-5,...xs),xmax=Math.max(5,...xs);const pad=(xmax-xmin)*.13;xmin-=pad;xmax+=pad;
+  // границы оси — кратные шагу делений, чтобы крайние подписи не были «−25 … 94»
+  {const span=xmax-xmin,step=span>150?50:span>60?20:10;xmin=Math.floor(xmin/step)*step;xmax=Math.ceil(xmax/step)*step;}
   const ymax=Math.max(1.4,...ys)*1.15;
   const all=data.directions;
   // Reusing one corpus for two proposed directions must not suggest two independent samples.

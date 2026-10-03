@@ -186,14 +186,17 @@ export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false
       out.push(`<line x1="${cx}" x2="${choice[0]}" y1="${cy}" y2="${choice[1]}" stroke="#8b877d" stroke-width=".8"/><rect x="${choice[0]-11}" y="${choice[1]-10}" width="22" height="20" rx="4" fill="#fbf9f4" stroke="${stateColour(r)}"/>`,tx(choice[0],choice[1]+4,String(r.index+1).padStart(2,'0'),'font-size="10" font-weight="600" text-anchor="middle"'),'</g>');
     });
     const keyX=w-keyW+1;
+    // высота пункта зависит от числа строк названия: подписи не наезжают на следующий пункт
+    let keyY=firstTop+6;
     rows.forEach((r,i)=>{
-      const y=firstTop+i*57+6;
+      const y=keyY,titleLines=lines(label(r),37).length,metaY=y+10+15*(titleLines-1)+16;
       out.push(openLink(r));
       out.push(`<g><title>${esc(label(r))}</title>`,tx(keyX,y+10,String(i+1).padStart(2,'0'),'font-size="10.5" font-weight="600" class="pish-muted"'));
       out.push(multiline(keyX+32,y+10,label(r),37,15,'font-size="12" font-weight="600"'));
-      out.push(tx(keyX+32,y+39,`FWCI ${fmt(lang,r.fwciP2,2)} · n=${fmt(lang,r.nP2,0)} · ${delta(r.worldShareChange)}`,'font-size="10.5" class="pish-muted"'));
-      out.push(tx(keyX+32,y+53,stateText(r),'font-size="10"'));
+      out.push(tx(keyX+32,metaY,`FWCI ${fmt(lang,r.fwciP2,2)} · n=${fmt(lang,r.nP2,0)} · ${delta(r.worldShareChange)}`,'font-size="10.5" class="pish-muted"'));
+      out.push(tx(keyX+32,metaY+13,stateText(r),`font-size="10" font-weight="600" fill="${stateColour(r)}"`));
       out.push('</g>',closeLink(r));
+      keyY=metaY+13+14;
     });
     const missing=rows.filter(r=>!finite(r.worldShareChange)||!finite(r.fwciP2)||r.fwciP2<0).length;
     if(missing)out.push(tx(left,top+plotH+68,`${en?'Not plotted: missing coordinates':'Не построено: нет координат'} · ${missing}`,'font-size="10.5" class="pish-muted"'));
