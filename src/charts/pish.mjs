@@ -10,57 +10,91 @@ function lines(s,n) {
   if (line) out.push(line); return out;
 }
 const multiline = (x,y,s,n,lh,attrs='') => lines(s,n).map((l,i)=>tx(x,y+i*lh,l,attrs)).join('');
-const STYLE = `<style>.pish-diagram{font-family:'Golos Text',Arial,sans-serif;color:#252420}.pish-diagram text{fill:#252420}.pish-diagram .pish-muted{fill:#69675f}.pish-diagram .pish-small{font-size:11px}.pish-diagram .pish-node-box{fill:#fbf9f4;stroke:#d9d4c8;stroke-width:1.3}.pish-diagram .pish-node a:focus .pish-node-box,.pish-diagram .pish-node a:hover .pish-node-box{stroke:#2f6db5;stroke-width:2.5}.pish-diagram .pish-strong{fill:#e4efea;stroke:#2b7e75}.pish-diagram .pish-build{fill:#e8eef6;stroke:#2f6db5}.pish-diagram .pish-verify{fill:#f6e8df;stroke:#b4432d}.pish-diagram .pish-flow{fill:none;stroke:#8b877d;stroke-width:1.6}.pish-diagram .pish-feedback{fill:none;stroke:#2f6db5;stroke-width:2.5}.pish-diagram .pish-qualification{fill:none;stroke:#69675f;stroke-width:1.5;stroke-dasharray:5 4}.pish-diagram .pish-cohort-before{fill:#fbf9f4;stroke:#69675f;stroke-width:2}.pish-diagram .pish-cohort-after{fill:#2f6db5;stroke:#fbf9f4;stroke-width:2}.pish-diagram .pish-cohort-down{fill:#b4432d}.pish-diagram .pish-grid{stroke:#e6e1d6;stroke-width:1}.pish-diagram .pish-reference{stroke:#8b877d;stroke-dasharray:4 4}.pish-diagram .pish-row-link:hover text,.pish-diagram .pish-row-link:focus text{fill:#2f6db5}.pish-diagram .pish-connector{fill:none;stroke:#2f6db5;stroke-width:2}.pish-diagram .pish-connector-down{stroke:#b4432d}</style>`;
+export const PISH_SVG_STYLE = `<style>.pish-diagram{font-family:'Golos Text',Arial,sans-serif;color:#252420}.pish-diagram text{fill:#252420}.pish-diagram .pish-muted{fill:#69675f}.pish-diagram .pish-small{font-size:11px}.pish-diagram .pish-node-box{fill:#fbf9f4;stroke:#d9d4c8;stroke-width:1.3}.pish-diagram .pish-node a:focus .pish-node-box,.pish-diagram .pish-node a:hover .pish-node-box{stroke:#2f6db5;stroke-width:2.5}.pish-diagram .pish-strong{fill:#e4efea;stroke:#2b7e75}.pish-diagram .pish-build{fill:#e8eef6;stroke:#2f6db5}.pish-diagram .pish-verify{fill:#f6e8df;stroke:#b4432d}.pish-diagram .pish-flow{fill:none;stroke:#8b877d;stroke-width:1.6}.pish-diagram .pish-feedback{fill:none;stroke:#2f6db5;stroke-width:2.5}.pish-diagram .pish-qualification{fill:none;stroke:#69675f;stroke-width:1.5;stroke-dasharray:5 4}.pish-diagram .pish-cohort-before{fill:#fbf9f4;stroke:#69675f;stroke-width:2}.pish-diagram .pish-cohort-after{fill:#2f6db5;stroke:#fbf9f4;stroke-width:2}.pish-diagram .pish-cohort-down{fill:#b4432d}.pish-diagram .pish-grid{stroke:#e6e1d6;stroke-width:1}.pish-diagram .pish-reference{stroke:#8b877d;stroke-dasharray:4 4}.pish-diagram .pish-row-link:hover text,.pish-diagram .pish-row-link:focus text{fill:#2f6db5}.pish-diagram .pish-connector{fill:none;stroke:#2f6db5;stroke-width:2}.pish-diagram .pish-connector-down{stroke:#b4432d}.pish-diagram .pish-learning{fill:none;stroke:#2b7e75;stroke-width:2;stroke-dasharray:7 4}.pish-diagram .pish-t-blue{fill:#2f6db5}.pish-diagram .pish-t-green{fill:#2b7e75}.pish-diagram .pish-t-coral{fill:#b4432d}.pish-diagram .pish-band-line-green{stroke:#2b7e75}.pish-diagram .pish-band-line-blue{stroke:#2f6db5}.pish-diagram .pish-band-line-coral{stroke:#b4432d}.pish-diagram .pish-product-box{fill:#e8eef6;stroke:#2f6db5;stroke-width:2}.pish-diagram .pish-chip-base{fill:#e4efea;stroke:#2b7e75}.pish-diagram .pish-chip-gap{fill:#f6e8df;stroke:#b4432d}.pish-diagram .pish-step{fill:#fbf9f4;stroke:#2f6db5;stroke-width:1.3}.pish-diagram .pish-side-box{fill:#fbf9f4;stroke:#d9d4c8;stroke-width:1.2}.pish-diagram .pish-flow-blue{fill:none;stroke:#2f6db5;stroke-width:2.2}.pish-diagram .pish-flow-coral{fill:none;stroke:#b4432d;stroke-width:2.2}.pish-diagram .pish-flow-muted{fill:none;stroke:#8b877d;stroke-width:1.6;stroke-dasharray:5 4}.pish-diagram .pish-bar{fill:#2f6db5}.pish-diagram .pish-band-budget{fill:#e4efea}.pish-diagram .pish-band-extra{fill:#f6e8df;opacity:.7}.pish-diagram .pish-band-window{fill:#e8eef6;opacity:.75}.pish-diagram .pish-gate{fill:#b4432d}.pish-diagram .pish-official{fill:#252420}.pish-diagram .pish-internal{fill:#2f6db5}.pish-diagram .pish-gate-line{stroke:#b4432d;stroke-dasharray:4 4}.pish-diagram .pish-lane-product{fill:#e8eef6;stroke:#2f6db5}.pish-diagram .pish-lane-science{fill:#e4efea;stroke:#2b7e75}.pish-diagram .pish-lane-people{fill:#efebe2;stroke:#8b877d}.pish-diagram .pish-lane-money{fill:#f6e8df;stroke:#b4432d}.pish-diagram .pish-axis{stroke:#8b877d}.pish-diagram .pish-halo{paint-order:stroke;stroke:#fbf9f4;stroke-width:4px;stroke-linejoin:round}</style>`;
 
+// Seven functions grouped by owner, with three feedback loops at different speeds:
+// the CNC servo loop (inside the machine), the adaptive loop and the learning loop.
 export function pishLoop(spec = {}, width = 1160, { standalone = false } = {}) {
   const {lang='ru',nodes=[]}=spec; const en=lang==='en';
   const w=Math.max(340,Number.isFinite(width)?Math.round(width):1160); const narrow=w<800;
-  const l=24; const gap=narrow?20:14; const cardW=narrow?w-102:(w-l*2-gap*6)/7; const cardH=narrow?144:165;
-  const top=narrow?96:92; const h=narrow?top+nodes.length*(cardH+gap)+114:466;
-  const pos=nodes.map((n,i)=>({x:narrow?l:l+i*(cardW+gap),y:narrow?top+i*(cardH+gap):top}));
-  const out=[`<svg xmlns="http://www.w3.org/2000/svg" class="chart-svg pish-diagram pish-loop-svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(en?'Proposed smart-machine system':'Предлагаемая система умного станка')}"><title>${esc(en?'From cutting to an accepted part':'От обработки к годной детали')}</title><desc>${esc(en?'Seven steps in the proposed system. Measured wear informs permitted changes to cutting settings; an independent measurement checks the finished part. CNC control and AI run at different speeds. The system and its targets still need to be built and tested.':'Семь шагов предлагаемой системы. По измеренному износу станок меняет режим в разрешённых пределах; готовую деталь проверяют отдельным измерением. ЧПУ и ИИ работают с разной скоростью. Систему и её целевые показатели ещё нужно испытать.')}</desc>${standalone?STYLE:''}<defs><marker id="pish-arrow-${lang}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7" fill="#8b877d"/></marker><marker id="pish-feedback-arrow-${lang}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="#2f6db5"/></marker></defs>`];
-  out.push(tx(l,28,narrow?(en?'PROPOSED SMART-MACHINE SYSTEM':'ПРЕДЛАГАЕМАЯ СИСТЕМА УМНОГО СТАНКА'):(en?'PROPOSED TASK · DETECT WEAR, ADJUST SETTINGS, CHECK THE PART':'ПРЕДЛАГАЕМАЯ ЗАДАЧА · ЗАМЕТИТЬ ИЗНОС, ПОДОБРАТЬ РЕЖИМ, ПРОВЕРИТЬ ДЕТАЛЬ'),'font-size="12" font-weight="600" letter-spacing="1"'));
-  if (!narrow) {
-    out.push(tx(pos[1]?.x??l,59,en?'CNC control: 100 µs*':'ЧПУ: цикл 100 мкс*','font-size="12" font-weight="600"'));
-    out.push(tx(pos[3]?.x??l,59,en?'Model response: ≤10 ms*':'Ответ модели: ≤10 мс*','font-size="12" font-weight="600"'));
-    out.push(tx(l,77,en?'DIFFERENT CONTROL SPEEDS · *VALUES TO BE TESTED':'РАЗНЫЕ СКОРОСТИ УПРАВЛЕНИЯ · *ЦЕЛЕВЫЕ ЗНАЧЕНИЯ ДЛЯ ИСПЫТАНИЙ','class="pish-muted" font-size="10.5"'));
-  } else {
-    out.push(tx(l,54,en?'CNC 100 µs* · model ≤10 ms*':'ЧПУ 100 мкс* · модель ≤10 мс*','font-size="13" font-weight="600"'));
-    out.push(tx(l,74,en?'Separate layers · *proposed target':'Разные уровни · *проектная цель','class="pish-muted" font-size="11"'));
-  }
-  for(let i=0;i<nodes.length;i++) {
-    const n=nodes[i],p=pos[i]; const main=i<6; const titleLines=lines(n.label,narrow?27:15); const subY=p.y+48+titleLines.length*19;
-    if(i<nodes.length-1&&main) {
-      const next=pos[i+1];
-      out.push(`<path class="${i===5?'pish-qualification':'pish-flow'}" d="${narrow?`M${p.x+cardW/2},${p.y+cardH} V${next.y-5}`:`M${p.x+cardW},${p.y+cardH/2} H${next.x-5}`}" marker-end="url(#pish-arrow-${lang})"/>`);
+  const bands=[
+    {from:0,to:1,tone:'green',label:en?'PROCESS PHYSICS · STANKIN BASE':'ФИЗИКА ПРОЦЕССА · ОПОРА СТАНКИН'},
+    {from:2,to:5,tone:'blue',label:en?'MACHINING INTELLIGENCE · THE NEW SCHOOL PRODUCT':'ИНТЕЛЛЕКТ ОБРАБОТКИ · ПРОДУКТ НОВОЙ ПИШ'},
+    {from:6,to:6,tone:'coral',label:en?'ACCEPTANCE':'ПРИЁМКА'},
+  ].filter(b=>b.from<nodes.length);
+  const texts={
+    adaptive:en?'≤10 ms* · ADAPTIVE LOOP: NEW PERMITTED SETTINGS → MACHINING':'≤10 мс* · АДАПТИВНЫЙ КОНТУР: НОВЫЙ РАЗРЕШЁННЫЙ РЕЖИМ → ОБРАБОТКА',
+    part:en?'PART → INDEPENDENT METROLOGY · ACCEPTED / REJECTED':'ДЕТАЛЬ → НЕЗАВИСИМАЯ МЕТРОЛОГИЯ · ГОДНАЯ / БРАК',
+    learning:en?'BETWEEN BATCHES · UPDATE THE MODEL ONLY AFTER VERIFICATION':'МЕЖДУ ПАРТИЯМИ · ОБНОВИТЬ МОДЕЛЬ ТОЛЬКО ПОСЛЕ ПРОВЕРКИ',
+  };
+  const legend=[
+    ['servo',en?'CNC servo loop · 100 µs* (inside the machine)':'Сервоконтур ЧПУ · 100 мкс* (внутри станка)'],
+    ['adaptive',en?'Adaptive loop · ≤10 ms*':'Адаптивный контур · ≤10 мс*'],
+    ['learning',en?'Learning loop · between batches':'Контур обучения · между партиями'],
+    ['part',en?'Part flow to independent acceptance':'Деталь — к независимой приёмке'],
+  ];
+  const id=`pish-arrow-${lang}`,fid=`pish-feedback-arrow-${lang}`,gid=`pish-learning-arrow-${lang}`;
+  const head=h=>`<svg xmlns="http://www.w3.org/2000/svg" class="chart-svg pish-diagram pish-loop-svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(en?'Proposed smart-machine system':'Предлагаемая система умного станка')}"><title>${esc(en?'From cutting to an accepted part':'От обработки к годной детали')}</title><desc>${esc(en?'Seven steps in the proposed system, grouped as process physics, the new school product and acceptance. The CNC servo loop runs inside the machine at about 100 µs; the adaptive loop changes permitted settings within about 10 ms; the learning loop updates the model between batches only after independent measurement. The system and its targets still need to be built and tested.':'Семь шагов предлагаемой системы, сгруппированных как физика процесса, продукт новой ПИШ и приёмка. Сервоконтур ЧПУ работает внутри станка с циклом около 100 мкс; адаптивный контур меняет разрешённый режим за время до 10 мс; контур обучения обновляет модель между партиями только после независимого измерения. Систему и её целевые показатели ещё нужно испытать.')}</desc>${standalone?PISH_SVG_STYLE:''}<defs><marker id="${id}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7" class="pish-muted"/></marker><marker id="${fid}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" class="pish-t-blue"/></marker><marker id="${gid}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" class="pish-t-green"/></marker></defs>`;
+  const swatch=(kind,x,y)=>kind==='servo'?`<circle cx="${x+11}" cy="${y-4}" r="7" fill="none" class="pish-flow"/><path d="M${x+14},${y-14} l4,3 l-4,3 z" class="pish-muted"/>`:kind==='adaptive'?`<path d="M${x},${y-4} H${x+22}" class="pish-feedback"/>`:kind==='learning'?`<path d="M${x},${y-4} H${x+22}" class="pish-learning"/>`:`<path d="M${x},${y-4} H${x+22}" class="pish-qualification"/>`;
+  const card=(n,i,p,cardW,cardH,labelN,subN)=>{
+    const status=n.status??'build';const titleLines=lines(n.label,labelN);const subY=p.y+47+titleLines.length*19;
+    return `<g class="pish-node"><a href="${esc(n.href??`#pish-node-${n.id}`)}" aria-label="${esc(`${String(i+1).padStart(2,'0')}. ${n.label}. ${n.subtitle??''}. ${n.statusLabel??''}`)}"><title>${esc(`${n.label}: ${n.subtitle??''}; ${n.statusLabel??''}`)}</title><rect x="${p.x}" y="${p.y}" width="${cardW}" height="${cardH}" rx="6" class="pish-node-box pish-${status}"/>${tx(p.x+13,p.y+22,String(i+1).padStart(2,'0'),'font-size="11" font-weight="600" class="pish-muted"')}${multiline(p.x+13,p.y+45,n.label,labelN,19,'font-size="15.5" font-weight="600"')}${multiline(p.x+13,subY,n.subtitle,subN,15,'font-size="11.5" class="pish-muted"')}${multiline(p.x+13,p.y+cardH-18,n.statusLabel,subN+2,13,'font-size="10.5" font-weight="600"')}</a></g>`;
+  };
+  const out=[];
+  if(!narrow){
+    const l=24,gap=14,cardW=(w-l*2-gap*6)/7,cardH=150,top=114,bottom=top+cardH;
+    const pos=nodes.map((n,i)=>({x:l+i*(cardW+gap),y:top}));const cx=i=>pos[i].x+cardW/2;
+    out.push(tx(l,26,en?'PROPOSED TASK · DETECT WEAR, ADJUST SETTINGS, CHECK THE PART':'ПРЕДЛАГАЕМАЯ ЗАДАЧА · ЗАМЕТИТЬ ИЗНОС, ПОДОБРАТЬ РЕЖИМ, ПРОВЕРИТЬ ДЕТАЛЬ','font-size="12" font-weight="600" letter-spacing="1"'));
+    for(const b of bands){const x1=pos[b.from].x,x2=pos[Math.min(b.to,nodes.length-1)].x+cardW;out.push(`<path d="M${x1},66 V58 H${x2} V66" fill="none" stroke-width="1.5" class="pish-band-line-${b.tone}"/>`,tx(x1,50,b.label,`font-size="10.5" font-weight="700" letter-spacing=".7" class="pish-t-${b.tone}"`));}
+    nodes.forEach((n,i)=>{
+      if(i<nodes.length-1)out.push(`<path class="${i===5?'pish-qualification':'pish-flow'}" d="M${pos[i].x+cardW},${top+cardH/2} H${pos[i+1].x-5}" marker-end="url(#${id})"/>`);
+      out.push(card(n,i,pos[i],cardW,cardH,15,20));
+    });
+    if(nodes.length>=7){
+      const ly=94;
+      out.push(`<path class="pish-learning" d="M${cx(6)},${top} V${ly} H${cx(3)} V${top-5}" marker-end="url(#${gid})"/>`,tx((cx(3)+cx(6))/2,ly-6,texts.learning,'font-size="11" font-weight="600" text-anchor="middle" class="pish-t-green"'));
+      const ay=bottom+36;
+      out.push(`<path class="pish-feedback" d="M${cx(5)},${bottom} V${ay-14} Q${cx(5)},${ay} ${cx(5)-14},${ay} H${cx(1)+14} Q${cx(1)},${ay} ${cx(1)},${ay-14} V${bottom+5}" marker-end="url(#${fid})"/>`,tx((cx(1)+cx(5))/2,ay-7,texts.adaptive,'font-size="12" font-weight="600" text-anchor="middle" class="pish-t-blue"'));
+      const py=bottom+80;
+      out.push(`<path class="pish-qualification" d="M${cx(1)-18},${bottom} V${py} H${cx(6)} V${bottom+5}" marker-end="url(#${id})"/>`,tx((cx(1)+cx(6))/2,py-7,texts.part,'font-size="11.5" text-anchor="middle" class="pish-muted"'));
+      const gy=bottom+122;let lx=l;
+      legend.forEach(([kind,label])=>{out.push(swatch(kind,lx,gy),tx(lx+30,gy,label,'font-size="11.5"'));lx+=30+label.length*6.3+26;});
+      out.push(tx(l,gy+36,en?'Before changing settings: check prediction reliability, permitted limits and part quality':'Перед сменой режима: проверить надёжность прогноза, разрешённые пределы и качество детали','font-size="12.5" font-weight="600"'));
+      out.push(tx(l,gy+60,en?'*Proposed targets for testing. Select a step to see the research, target, responsible team and test.':'*Целевые значения для испытаний. Нажмите шаг: исследования, цель, ответственные и способ проверки.','class="pish-muted" font-size="11.5"'));
+      return head(gy+78)+out.join('')+'</svg>';
     }
-    const status=n.status??'build';
-    out.push(`<g class="pish-node"><a href="${esc(n.href??`#pish-node-${n.id}`)}" aria-label="${esc(`${String(i+1).padStart(2,'0')}. ${n.label}. ${n.subtitle??''}. ${n.statusLabel??''}`)}"><title>${esc(`${n.label}: ${n.subtitle??''}; ${n.statusLabel??''}`)}</title><rect x="${p.x}" y="${p.y}" width="${cardW}" height="${cardH}" rx="6" class="pish-node-box pish-${status}"/>`);
-    out.push(tx(p.x+13,p.y+23,String(i+1).padStart(2,'0'),'font-size="11" font-weight="600" class="pish-muted"'));
-    out.push(multiline(p.x+13,p.y+47,n.label,narrow?27:15,19,'font-size="15.5" font-weight="600"'));
-    out.push(multiline(p.x+13,subY,n.subtitle,narrow?37:20,15,'font-size="11.5" class="pish-muted"'));
-    out.push(multiline(p.x+13,p.y+cardH-24,n.statusLabel,narrow?35:21,13,'font-size="10.5" font-weight="600"'));
-    out.push('</a></g>');
+    return head(bottom+40)+out.join('')+'</svg>';
   }
-  if(nodes.length>=7) {
-    const cutting=pos[1],correction=pos[5],accepted=pos[6];
-    if(narrow) {
-      const bx=w-26;
-      out.push(`<path class="pish-feedback" d="M${correction.x+cardW},${correction.y+cardH*.52} H${bx} V${cutting.y+cardH*.52} H${cutting.x+cardW+5}" marker-end="url(#pish-feedback-arrow-${lang})"/>`);
-      out.push(`<text x="${bx-10}" y="${(cutting.y+correction.y)/2+cardH/2}" transform="rotate(-90 ${bx-10} ${(cutting.y+correction.y)/2+cardH/2})" font-size="12" fill="#2f6db5" text-anchor="middle">${esc(en?'New permitted settings → cutting':'Новый разрешённый режим → обработка')}</text>`);
-      out.push(multiline(l,h-71,en?'Independent measurements check the finished part.':'Готовую деталь проверяют независимым измерением.',39,17,'font-size="12"'));
-      out.push(multiline(l,h-33,en?'Select a step: who does it and how we test it.':'Нажмите шаг: кто делает и как проверяем.',43,15,'class="pish-muted" font-size="10.5"'));
-    }else {
-      const cy=correction.y+cardH,cx=correction.x+cardW/2,cutX=cutting.x+cardW/2,accX=accepted.x+cardW/2;
-      out.push(`<path class="pish-feedback" d="M${cx},${cy} V305 Q${cx},319 ${cx-14},319 H${cutX+14} Q${cutX},319 ${cutX},305 V${cy+5}" marker-end="url(#pish-feedback-arrow-${lang})"/>`);
-      out.push(tx((cx+cutX)/2,304,en?'CHANGE PERMITTED SETTINGS → MACHINE THE PART':'ИЗМЕНИТЬ РАЗРЕШЁННЫЙ РЕЖИМ → ОБРАБОТАТЬ ДЕТАЛЬ','font-size="12" font-weight="600" fill="#2f6db5" text-anchor="middle"'));
-      out.push(`<path class="pish-qualification" d="M${cutX-17},${cy} V377 H${accX} V${cy+5}" marker-end="url(#pish-arrow-${lang})"/>`);
-      out.push(tx((cutX+accX)/2,367,en?'INDEPENDENT METROLOGY · ACCEPTED PART / REJECTED PART':'НЕЗАВИСИМАЯ МЕТРОЛОГИЯ · ГОДНАЯ ДЕТАЛЬ / БРАК','class="pish-muted" font-size="11.5" text-anchor="middle"'));
-      out.push(tx(l,415,en?'Before changing settings: check prediction reliability, permitted limits and part quality':'Перед сменой режима: проверить надёжность прогноза, разрешённые пределы и качество детали','font-size="12.5" font-weight="600"'));
-      out.push(tx(l,445,en?'Select a step to see the research, target, responsible team and test.':'Нажмите шаг: исследования, цель, ответственные и способ проверки.','class="pish-muted" font-size="11.5"'));
-    }
+  // narrow: a vertical chain; adaptive loop on the right, learning loop on the left
+  const left=40,right=34,cardW=w-left-right-12,cardH=124,gap=18;const labelN=Math.max(12,Math.floor((cardW-26)/8.7)),subN=Math.max(14,Math.floor((cardW-26)/6.5));
+  out.push(multiline(16,26,en?'PROPOSED SMART-MACHINE SYSTEM':'ПРЕДЛАГАЕМАЯ СИСТЕМА УМНОГО СТАНКА',Math.floor((w-32)/7),15,'font-size="12" font-weight="600" letter-spacing="1"'));
+  out.push(multiline(16,54,en?'CNC 100 µs* · model ≤10 ms* · learning between batches':'ЧПУ 100 мкс* · модель ≤10 мс* · обучение между партиями',Math.floor((w-32)/7.3),16,'font-size="13" font-weight="600"'));
+  let y=54+lines(en?'CNC 100 µs* · model ≤10 ms* · learning between batches':'ЧПУ 100 мкс* · модель ≤10 мс* · обучение между партиями',Math.floor((w-32)/7.3)).length*16+8;
+  out.push(tx(16,y,en?'Separate layers · *proposed target':'Разные уровни · *проектная цель','class="pish-muted" font-size="11"'));y+=22;
+  const pos=[];
+  nodes.forEach((n,i)=>{
+    const band=bands.find(b=>b.from===i);
+    if(band){out.push(`<path d="M${left},${y+6} H${left+cardW}" stroke-width="1.5" class="pish-band-line-${band.tone}"/>`,multiline(left,y,band.label,Math.floor(cardW/7.4),13,`font-size="10.5" font-weight="700" letter-spacing=".5" class="pish-t-${band.tone}"`));y+=lines(band.label,Math.floor(cardW/7.4)).length*13+10;}
+    pos.push({x:left,y});y+=cardH+gap;
+  });
+  nodes.forEach((n,i)=>{
+    if(i<nodes.length-1){const a=pos[i],b=pos[i+1];out.push(`<path class="${i===5?'pish-qualification':'pish-flow'}" d="M${a.x+cardW/2},${a.y+cardH} V${b.y-5}" marker-end="url(#${id})"/>`);}
+    out.push(card(n,i,pos[i],cardW,cardH,labelN,subN));
+  });
+  if(nodes.length>=7){
+    const bx=w-18,c=pos[1],r=pos[5];
+    out.push(`<path class="pish-feedback" d="M${r.x+cardW},${r.y+cardH*.52} H${bx} V${c.y+cardH*.52} H${c.x+cardW+5}" marker-end="url(#${fid})"/>`);
+    const my=(c.y+r.y)/2+cardH/2;out.push(`<text x="${bx-8}" y="${my}" transform="rotate(-90 ${bx-8} ${my})" font-size="11.5" text-anchor="middle" class="pish-t-blue">${esc(en?'≤10 ms* · new permitted settings → cutting':'≤10 мс* · новый разрешённый режим → обработка')}</text>`);
+    const lx=16,a=pos[6],m=pos[3];
+    out.push(`<path class="pish-learning" d="M${a.x},${a.y+cardH*.5} H${lx} V${m.y+cardH*.5} H${m.x-5}" marker-end="url(#${gid})"/>`);
+    const gy=(a.y+m.y)/2+cardH/2;out.push(`<text x="${lx+11}" y="${gy}" transform="rotate(-90 ${lx+11} ${gy})" font-size="11" text-anchor="middle" class="pish-t-green">${esc(en?'Between batches: update the model after checks':'Между партиями: обновить модель после проверки')}</text>`);
   }
-  return out.join('')+'</svg>';
+  y+=4;
+  out.push(multiline(16,y,en?'Independent measurements check the finished part.':'Готовую деталь проверяют независимым измерением.',Math.floor((w-32)/7),17,'font-size="12"'));
+  y+=lines(en?'Independent measurements check the finished part.':'Готовую деталь проверяют независимым измерением.',Math.floor((w-32)/7)).length*17+12;
+  out.push(multiline(16,y,en?'Select a step: who does it and how we test it.':'Нажмите шаг: кто делает и как проверяем.',Math.floor((w-32)/6.2),15,'class="pish-muted" font-size="10.5"'));
+  y+=30;
+  return head(y)+out.join('')+'</svg>';
 }
 
 export function cohortsChart(spec = {}, width = 1160) {
@@ -108,7 +142,7 @@ export function pishTopicLandscape(spec = {}, width = 1160, { standalone = false
   const firstTop=114,firstHeight=narrow?rows.length*172+18:Math.max(500,rows.length*57+65);
   const secondTop=firstTop+firstHeight+49,topicH=narrow?124:65;
   const h=secondTop+topics.length*topicH+(narrow?170:114);
-  const out=[`<svg xmlns="http://www.w3.org/2000/svg" class="chart-svg pish-diagram pish-topic-landscape" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(en?'Research fields and selected emerging topics':'Научные направления и растущие темы')}"><title>${esc(en?'Choose a field, then inspect the specific research topics':'Выбрать направление и проверить конкретные научные темы')}</title><desc>${esc(en?'The first view compares broad groups using change in world publication share, recent STANKIN FWCI and recent publication count. The second view shows selected OpenAlex topics on a separate taxonomy. World share is relative to all world publications. This is not a global ranking, market estimate or assessment of technology readiness. Missing values are distinguished from zero; action labels are supplied by the page model rather than inferred from coordinates.':'Сначала сравниваются широкие группы: изменение мировой публикационной доли, FWCI новых работ СТАНКИН и число новых работ. Затем отдельно показаны выбранные темы OpenAlex с другой детализацией классификации. Мировая доля считается относительно всех мировых работ. Это не мировой рейтинг, оценка рынка или готовности технологии. Пропуски отличаются от нуля; подписи действий передаёт модель страницы, а не координаты на графике.')}</desc>${standalone?STYLE:''}`];
+  const out=[`<svg xmlns="http://www.w3.org/2000/svg" class="chart-svg pish-diagram pish-topic-landscape" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${esc(en?'Research fields and selected emerging topics':'Научные направления и растущие темы')}"><title>${esc(en?'Choose a field, then inspect the specific research topics':'Выбрать направление и проверить конкретные научные темы')}</title><desc>${esc(en?'The first view compares broad groups using change in world publication share, recent STANKIN FWCI and recent publication count. The second view shows selected OpenAlex topics on a separate taxonomy. World share is relative to all world publications. This is not a global ranking, market estimate or assessment of technology readiness. Missing values are distinguished from zero; action labels are supplied by the page model rather than inferred from coordinates.':'Сначала сравниваются широкие группы: изменение мировой публикационной доли, FWCI новых работ СТАНКИН и число новых работ. Затем отдельно показаны выбранные темы OpenAlex с другой детализацией классификации. Мировая доля считается относительно всех мировых работ. Это не мировой рейтинг, оценка рынка или готовности технологии. Пропуски отличаются от нуля; подписи действий передаёт модель страницы, а не координаты на графике.')}</desc>${standalone?PISH_SVG_STYLE:''}`];
   out.push(tx(18,26,en?'1 · BROAD RESEARCH FIELDS':'1 · ШИРОКИЕ НАУЧНЫЕ НАПРАВЛЕНИЯ','font-size="12" font-weight="600" letter-spacing=".8"'));
   out.push(multiline(18,53,en?'World topic-share change × recent STANKIN citation impact':'Изменение мировой доли направления × цитирование новых работ СТАНКИН',narrow?39:110,20,'font-size="16" font-weight="600"'));
   out.push(multiline(18,narrow?96:84,en?'Area = recent work count · whiskers = descriptive 95% intervals':'Площадь = число новых работ · усы = описательные 95% интервалы',narrow?47:140,14,'font-size="10.5" class="pish-muted"'));

@@ -162,7 +162,7 @@ async function main() {
   }
 
   // Обязательные файлы
-  for (const f of ['index.html', 'en/index.html', 'pish/index.html', 'en/pish/index.html', '404.html', 'robots.txt', '.nojekyll', 'data/metrics.json', 'data/pish.json', 'data/pish-loop-ru.svg', 'data/pish-loop-en.svg', 'assets/js/site.mjs', 'assets/js/charts/charts.mjs', 'assets/js/charts/pish.mjs']) {
+  for (const f of ['index.html', 'en/index.html', 'pish/index.html', 'en/pish/index.html', '404.html', 'robots.txt', '.nojekyll', 'data/metrics.json', 'data/pish.json', 'data/pish-loop-ru.svg', 'data/pish-loop-en.svg', 'data/pish-bet-ru.svg', 'data/pish-bet-en.svg', 'data/pish-roadmap-ru.svg', 'data/pish-roadmap-en.svg', 'assets/js/site.mjs', 'assets/js/charts/charts.mjs', 'assets/js/charts/pish.mjs', 'assets/js/charts/pish-bet.mjs']) {
     if (!(await exists(path.join(dir, f)))) fail(`нет обязательного файла ${f}`);
   }
 

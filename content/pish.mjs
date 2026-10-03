@@ -66,6 +66,28 @@ export const PISH_SOURCES = [
     title: { ru: 'Made in Europe: исследовательская повестка производства до 2030 года', en: 'Made in Europe: manufacturing research agenda towards 2030' },
     url: 'https://effra.eu/wp-content/uploads/2023/12/made_in_europe-sria.pdf',
   },
+  {
+    id: 'stankin-axioma',
+    title: { ru: 'СТАНКИН: система ЧПУ «АксиОМА Контрол» — архитектура и возможности', en: 'STANKIN: AxiOMA Control CNC — architecture and capabilities' },
+    url: 'https://stankin.ru/nauka-i-innovatsii/chpu-aksioma-kontrol/klyuchevye-vozmozhnosti-i-osobennosti-sistemy/',
+  },
+  {
+    id: 'national-project-production',
+    title: { ru: 'Минобрнауки: национальный проект «Средства производства и автоматизации»', en: 'Ministry: “Means of Production and Automation” national project' },
+    url: 'https://www.minobrnauki.gov.ru/nac_project/proizvodstvo_avtomatizatsiya/',
+  },
+  {
+    id: 'programme-2026-targets',
+    title: { ru: 'Программа развития СТАНКИН на 2025–2036 годы: целевые показатели 2030 и 2036 годов', en: 'STANKIN development programme 2025–2036: 2030 and 2036 targets' },
+    url: 'https://cloud.stankin.ru/s/ZZMSLzwyPBpTArm',
+    section: { ru: 'С. 45: доход от НИОКР, 25 видов станочного оборудования к 2036 году', en: 'P. 45: R&D income and 25 types of machine-tool equipment by 2036' },
+  },
+  {
+    id: 'self-assessment-2025-finance',
+    title: { ru: 'Самообследование СТАНКИН 2026 года: поступления от НИОКР, услуг и работ за 2025 год', en: 'STANKIN 2026 self-assessment: 2025 receipts from R&D, services and other work' },
+    url: 'https://stankin.ru/vikon/sveden/files/zir/OTCHET_o_rezulytatax_samoobsledovaniya_2026%283%29.pdf',
+    section: { ru: 'С. 241: 586,2 млн ₽, университет в целом', en: 'P. 241: RUB 586.2 million, the university as a whole' },
+  },
 ];
 
 export const PISH_REQUIREMENTS = [

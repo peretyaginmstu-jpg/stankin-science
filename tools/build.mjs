@@ -30,6 +30,9 @@ import { worldTrendSvg } from '../src/render/world-trends.mjs';
 import { buildExplorer } from '../src/lib/explorer.mjs';
 import { pishPage, pishLoopSpec } from '../src/render/pish.mjs';
 import { pishAgendaSpecs } from '../src/render/pish-agenda.mjs';
+import { pishBetMapSpec, pishRoadmapSpec } from '../src/render/pish-bet.mjs';
+import { pishBetMap, pishRoadmapChart } from '../src/charts/pish-bet.mjs';
+import { PISH_BET, PISH_BET_REASONS, PISH_BET_OPTIONS, PISH_BET_BOUNDARY, PISH_BET_PARTNERS, PISH_BET_TIMELINE, PISH_BET_RISKS, PISH_BET_REVIEWED_AT } from '../content/pish-bet.mjs';
 import { pishTopicTree, pishResearchPaths } from '../src/charts/pish-topics.mjs';
 import { PISH_TOPIC_UMBRELLA, PISH_TOPIC_FAMILIES, PISH_TOPIC_METHOD_CAVEAT } from '../content/pish-topics.mjs';
 import { pishLoop, pishTopicLandscape } from '../src/charts/pish.mjs';
@@ -78,6 +81,7 @@ const JS_MODULES = [
   ['src/charts/strategy.mjs','assets/js/charts/strategy.mjs'],
   ['src/charts/pish.mjs','assets/js/charts/pish.mjs'],
   ['src/charts/pish-topics.mjs','assets/js/charts/pish-topics.mjs'],
+  ['src/charts/pish-bet.mjs','assets/js/charts/pish-bet.mjs'],
   ['src/lib/text.mjs','assets/js/lib/text.mjs'],
   ['src/lib/format.mjs','assets/js/lib/format.mjs'],
 ];
@@ -194,6 +198,8 @@ async function main() {
     // A saved SVG must link back to the page, rather than an absent local fragment.
     diagramSpec.nodes = diagramSpec.nodes.map(node => ({ ...node, href: `${diagramPageUrl}#pish-node-${node.id}` }));
     await write(`data/pish-loop-${lang}.svg`, pishLoop(diagramSpec, 1160, { standalone: true }));
+    await write(`data/pish-bet-${lang}.svg`, pishBetMap(pishBetMapSpec(diagramCtx), 1160, { standalone: true }));
+    await write(`data/pish-roadmap-${lang}.svg`, pishRoadmapChart(pishRoadmapSpec(diagramCtx), 1160, { standalone: true }));
     const agendaSpecs = pishAgendaSpecs(diagramCtx);
     const absoluteLinks = value => Array.isArray(value) ? value.map(absoluteLinks) : value && typeof value === 'object'
       ? Object.fromEntries(Object.entries(value).map(([key,item]) => [key,key==='href' ? new URL(item,diagramPageUrl).href : absoluteLinks(item)])) : value;
@@ -225,7 +231,7 @@ async function main() {
   await write('data/explorer.json', `${JSON.stringify(explorer)}\n`);
   await write('data/metrics.json', `${JSON.stringify({ ...exportable, competencyTopics, competencyNames: Object.fromEntries(COMPETENCIES.map((c) => [c.id, c.name])) }, null, 1)}\n`);
   await write('data/strategy.json', `${JSON.stringify({ ...model.strategy, industrialTopics: model.industrialTopics }, null, 2)}\n`);
-  await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES, agenda:{umbrella:PISH_TOPIC_UMBRELLA,families:PISH_TOPIC_FAMILIES,caveat:PISH_TOPIC_METHOD_CAVEAT} }, null, 2)}\n`);
+  await write('data/pish.json', `${JSON.stringify({ ...model.pish, callReviewedAt: PISH_REVIEWED_AT, sources: PISH_SOURCES, requirements: PISH_REQUIREMENTS, minimums: PISH_MINIMUMS, candidates: PISH_CANDIDATES, bet: { reviewedAt: PISH_BET_REVIEWED_AT, bet: PISH_BET, reasons: PISH_BET_REASONS, options: PISH_BET_OPTIONS, boundary: PISH_BET_BOUNDARY, partners: PISH_BET_PARTNERS, timeline: PISH_BET_TIMELINE, risks: PISH_BET_RISKS }, agenda:{umbrella:PISH_TOPIC_UMBRELLA,families:PISH_TOPIC_FAMILIES,caveat:PISH_TOPIC_METHOD_CAVEAT} }, null, 2)}\n`);
   await write('data/competencies.csv', csv(
     ['id', 'name_ru', 'name_en', 'works', 'world_works', 'world_share', 'specialisation_index', 'fwci', 'top10_share', 'intl_share', 'growth_university', 'growth_world', 'rank_russia', 'rank_world', 'topics'],
     model.competencies.map((c) => {

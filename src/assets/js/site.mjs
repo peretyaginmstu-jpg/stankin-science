@@ -8,8 +8,9 @@ import { RENDERERS } from './charts/charts.mjs';
 import { strategyMatrix, capabilityHeatmap } from './charts/strategy.mjs';
 import { pishLoop, cohortsChart, pishTopicLandscape } from './charts/pish.mjs';
 import { pishTopicTree, pishResearchPaths } from './charts/pish-topics.mjs';
+import { pishBetMap, pishFundingChart, pishSubmissionPath, pishRoadmapChart } from './charts/pish-bet.mjs';
 
-const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap, 'pish-loop': pishLoop, 'pish-cohorts': cohortsChart, 'pish-landscape':pishTopicLandscape, 'pish-topic-tree':pishTopicTree, 'pish-research-paths':pishResearchPaths };
+const ALL_RENDERERS = { ...RENDERERS, 'strategy-matrix': strategyMatrix, 'strategy-heatmap': capabilityHeatmap, 'pish-loop': pishLoop, 'pish-cohorts': cohortsChart, 'pish-landscape':pishTopicLandscape, 'pish-topic-tree':pishTopicTree, 'pish-research-paths':pishResearchPaths, 'pish-bet-map':pishBetMap, 'pish-funding':pishFundingChart, 'pish-path':pishSubmissionPath, 'pish-roadmap':pishRoadmapChart };
 
 const lang = document.documentElement.lang || 'ru';
 
