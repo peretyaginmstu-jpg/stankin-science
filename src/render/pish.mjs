@@ -3,6 +3,7 @@ import { pishLoop, cohortsChart } from '../charts/pish.mjs';
 import { PISH_SOURCES, PISH_REQUIREMENTS, PISH_MINIMUMS, PISH_CANDIDATES, PISH_REVIEWED_AT } from '../../content/pish.mjs';
 import { pishAgenda } from './pish-agenda.mjs';
 import { PISH_READING } from '../../content/pish-reading.mjs';
+import { readingBlock } from './reading.mjs';
 import { betSection, boundaryTable, raciTable, pishRoadmapFigure } from './pish-bet.mjs';
 
 const L=(ctx,ru,en)=>ctx.lang==='en'?en:ru;
@@ -142,8 +143,7 @@ function readingGuide(ctx) {
     [L(ctx,'РИД','IP'),L(ctx,'Результаты интеллектуальной деятельности: патенты, программы, базы данных.','Intellectual property: patents, software, databases.')],
     [L(ctx,'НИОКР · ДПО · ППС','R&D · CPD · faculty'),L(ctx,'Исследования и разработки · дополнительное профессиональное образование · преподаватели.','Research and development · continuing professional development · academic staff.')],
   ];
-  const points=PISH_READING.points.map((p,i)=>`<li id="pish-reading-${esc(p.id)}"><span class="pish-reading-index">${String(i+1).padStart(2,'0')}</span><div><strong>${esc(phrase(ctx,p.title))}</strong><p>${esc(phrase(ctx,p.text))}</p></div></li>`).join('');
-  return `<aside class="pish-reading wrap" id="pish-reading" aria-labelledby="pish-reading-title"><div class="pish-reading-head"><h2 id="pish-reading-title">${esc(phrase(ctx,PISH_READING.title))}</h2><p>${esc(phrase(ctx,PISH_READING.lead))}</p></div><ol class="pish-reading-points">${points}</ol><details class="pish-glossary"><summary>${esc(L(ctx,'Сокращения и показатели','Abbreviations and indicators'))}</summary><dl>${items.map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></details></aside>`;
+  return readingBlock(ctx,PISH_READING,{id:'pish-reading',glossary:items,glossaryTitle:L(ctx,'Сокращения и показатели','Abbreviations and indicators')});
 }
 
 export function pishPage(ctx) {

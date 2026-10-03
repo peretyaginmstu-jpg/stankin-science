@@ -329,20 +329,4 @@ body.pish-projector .pish-bet-reasons p,body.pish-projector .pish-bet-condition 
 .pish-evidence-info{border-top-color:var(--cool)}
 table.pish-evidence-table tr.pish-evidence-total>*{background:var(--sunken)}
 
-.pish-reading{margin-top:18px;margin-bottom:6px;padding:20px 22px 16px;border:1px solid var(--line);border-left:4px solid var(--context);border-radius:var(--radius);background:var(--surface)}
-.pish-reading-head{display:grid;grid-template-columns:minmax(200px,.6fr) 1.4fr;gap:6px 28px;align-items:baseline}
-.pish-reading-head h2{font-family:var(--sans);font-size:18px;font-weight:650;letter-spacing:-.01em;margin:0}
-.pish-reading-head p{font-size:13.5px;color:var(--muted);line-height:1.5}
-.pish-reading-points{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 22px;margin:16px 0 4px;padding:16px 0 0;border-top:1px solid var(--line)}
-.pish-reading-points li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
-.pish-reading-index{font-size:12px;font-weight:650;color:var(--muted);padding-top:2px;font-variant-numeric:tabular-nums}
-.pish-reading-points strong{display:block;font-size:13.5px;line-height:1.35;margin-bottom:4px}
-.pish-reading-points p{font-size:12.5px;line-height:1.5;color:var(--ink-2)}
-.pish-glossary{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
-.pish-glossary summary{cursor:pointer;font-weight:600;font-size:13.5px}
-.pish-glossary dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px 26px;margin:14px 0 4px}
-.pish-glossary dt{font-weight:700;font-size:13.5px}
-.pish-glossary dd{margin:2px 0 0;font-size:13.5px;line-height:1.45;color:var(--muted)}
-@media (max-width:1100px){.pish-reading-points{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:640px){.pish-reading{padding:16px}.pish-reading-head{grid-template-columns:1fr}.pish-reading-points{grid-template-columns:1fr}}
-@media print{.pish-glossary{display:block}.pish-glossary dl{display:grid}.pish-reading{break-inside:avoid}}
+
