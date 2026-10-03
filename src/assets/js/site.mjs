@@ -29,7 +29,7 @@ if (toggle) {
       toggle.focus();
     }
   });
-  window.matchMedia('(min-width: 1181px)').addEventListener('change', (e) => e.matches && set(false));
+  window.matchMedia('(min-width: 1281px)').addEventListener('change', (e) => e.matches && set(false));
 }
 
 // ---------- подсказки ----------
