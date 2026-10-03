@@ -61,3 +61,6 @@ body.tt-projector{--content:1580px;font-size:19px}.tt-projector .tt-section{padd
 .tt-official-targets{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}.tt-official-targets article{background:#edf4f0;border:1px solid #bfd4c8;border-top:3px solid #376a52;padding:22px}.tt-official-targets h3{font-size:21px;margin:14px 0}.tt-official-targets p{font-size:13px;line-height:1.75}.tt-official-tag{font:600 11px/1.5 var(--sans);color:#2c654b}.tt-target-separation{font-size:13px;padding:15px 0;border-top:1px solid var(--line);margin-bottom:20px;color:#845429}@media(max-width:680px){.tt-official-targets{grid-template-columns:1fr}.tt-official-targets article{padding:17px}}@media print{.tt-official-targets p{font-size:10px}.tt-official-targets article{break-inside:avoid}}
 
 .tt-direction-card .tt-card-caveat{flex:0;margin:11px 0 0;padding:9px 10px;border-left:2px solid var(--tt-orange);background:#fbf2e9;color:#795434;font-size:11px;line-height:1.55}
+
+.tt-observation-value span{white-space:nowrap}.tt-observation-value strong.tt-missing{font-size:13px;font-weight:600;line-height:1.35;color:var(--muted)}
+.tt-bet-link{margin-top:16px;font-size:13px;line-height:1.5}.tt-bet-link a{color:inherit;font-weight:600}

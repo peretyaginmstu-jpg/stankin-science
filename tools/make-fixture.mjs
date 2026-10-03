@@ -178,17 +178,52 @@ const FIELD_NAMES = {
 const DOMAIN_OF_FIELD = { 12: 2, 13: 1, 14: 2, 15: 3, 16: 3, 17: 3, 18: 2, 19: 3, 20: 2, 21: 3, 22: 3, 23: 3, 25: 3, 26: 3, 27: 4, 31: 3, 33: 2 };
 const DOMAIN_NAMES = { 1: 'Life Sciences', 2: 'Social Sciences', 3: 'Physical Sciences', 4: 'Health Sciences' };
 
-const topics = TOPICS.map(([subfield, name], i) => {
+// Темы с настоящими идентификаторами OpenAlex, на которые ссылаются разделы сайта
+// (отраслевые линзы, контуры индекса, Think Tank, ПИШ). Объёмы и рост выдуманы.
+const NAMED_TOPICS = [
+  ['T10188', 2209, 'Advanced machining processes and optimization', 60000, 1.25, 16],
+  ['T11451', 2210, 'Electrical discharge and electrochemical machining', 15000, 1.15, 5],
+  ['T11583', 3105, 'Advanced Measurement and Metrology Techniques', 22000, 1.2, 7],
+  ['T11138', 2210, 'Tribology and Lubrication Engineering', 18000, 1.2, 6],
+  ['T10377', 2211, 'Metal and Thin Film Mechanics', 30000, 1.15, 10],
+  ['T10626', 2505, 'High-Temperature Coating Behaviors', 12000, 1.2, 3],
+  ['T10732', 2210, 'Laser Material Processing Techniques', 25000, 1.4, 4],
+  ['T13049', 2209, 'Surface Roughness and Optical Measurements', 6000, 1.1, 2],
+  ['T12019', 2208, 'Calibration and Measurement Techniques', 8000, 1.2, 1.5],
+  ['T11890', 3105, 'Scientific Measurement and Uncertainty Evaluation', 7000, 1.05, 1],
+  ['T12111', 1707, 'Industrial Vision Systems and Defect Detection', 15000, 2.4, 1.2],
+  ['T10220', 2210, 'Machine Fault Diagnosis Techniques', 25000, 1.9, 2],
+  ['T11948', 2505, 'Machine Learning in Materials Science', 6000, 3.0, 0],
+  ['T10705', 2209, 'Additive Manufacturing Materials and Processes', 35000, 1.9, 5],
+  ['T10783', 2209, 'Additive Manufacturing and 3D Printing Technologies', 30000, 1.8, 3],
+  ['T10653', 2207, 'Robot Manipulation and Learning', 20000, 1.9, 1.5],
+  ['T10462', 1702, 'Reinforcement Learning in Robotics', 18000, 2.2, 0.5],
+  ['T10763', 1404, 'Digital Transformation in Industry', 20000, 2.0, 4],
+  ['T13470', 2508, 'Surface Treatment and Coatings', 15000, 1.2, 6],
+  ['T12362', 2210, 'Tribology and Wear Analysis', 12000, 1.1, 5],
+  ['T12427', 2506, 'Metal Alloys Wear and Properties', 9000, 1.1, 3],
+  ['T11799', 2508, 'Adhesion, Friction, and Surface Interactions', 8000, 1.05, 1],
+  ['T12106', 2211, 'Surface Treatment and Residual Stress', 7000, 1.15, 2],
+  ['T11301', 2209, 'Advanced Surface Polishing Techniques', 9000, 1.2, 2],
+  ['T11062', 2210, 'Gear and Bearing Dynamics Analysis', 25000, 1.3, 4],
+  ['T12092', 2210, 'Erosion and Abrasive Wear', 5000, 1.1, 1],
+  ['T12282', 2211, 'Mineral Processing and Grinding', 6000, 1.0, 0.4],
+  ['T10399', 1909, 'Hydrocarbon Exploration and Reservoir Analysis', 9000, 1.0, 0.2],
+  ['T10635', 1909, 'Hydraulic Fracturing and Reservoir Analysis', 8000, 1.1, 0.2],
+  ['T11801', 1909, 'Reservoir Engineering and Simulation Methods', 9000, 1.0, 0.2],
+];
+const ALL_TOPICS = [...TOPICS.map((t, i) => [`T${10001 + i}`, ...t]), ...NAMED_TOPICS];
+const topics = ALL_TOPICS.map(([id, subfield, name]) => {
   const field = Math.floor(subfield / 100);
-  return { id: `T${10001 + i}`, name, subfield, field, domain: DOMAIN_OF_FIELD[field] };
+  return { id, name, subfield, field, domain: DOMAIN_OF_FIELD[field] };
 });
 const subfieldNames = {};
-for (const [subfield, name] of TOPICS) subfieldNames[subfield] ??= `Subfield ${subfield} (${name.split(' ')[0]})`;
+for (const [, subfield, name] of ALL_TOPICS) subfieldNames[subfield] ??= `Subfield ${subfield} (${name.split(' ')[0]})`;
 
 // Мировой поток: объём первого периода, рост ко второму, распределение по годам.
 const worldTopics = {};
 const worldByYear = Object.fromEntries(YEARS.map((y) => [y, 0]));
-TOPICS.forEach(([, , p1, growth], i) => {
+ALL_TOPICS.forEach(([, , , p1, growth], i) => {
   const a = Math.round(p1 * (0.9 + rand() * 0.2));
   const b = Math.round(a * growth * (0.95 + rand() * 0.1));
   worldTopics[topics[i].id] = [a, b];
@@ -244,7 +279,7 @@ const sourceIds = SOURCE_NAMES.map(([name, type], i) => {
 const sourceWeights = sourceIds.map((id, i) => [id, 30 / (i + 2)]);
 
 // Публикации университета.
-const topicWeights = TOPICS.map(([, , , , w], i) => [topics[i].id, w]);
+const topicWeights = ALL_TOPICS.map(([, , , , , w], i) => [topics[i].id, w]);
 const works = [];
 let wseq = 4000000001;
 const LAST_NAMES = ['Ivanov', 'Petrova', 'Smirnov', 'Kuznetsova', 'Sokolov', 'Popova', 'Lebedev', 'Kozlova', 'Novikov', 'Morozova', 'Volkov', 'Fedorova'];

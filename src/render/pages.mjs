@@ -2,7 +2,8 @@
 
 import { bubble, lines, columns, hbars, divergingBar, refBar, sparkline } from '../charts/charts.mjs';
 import { esc, kpis, figure, legend, bubbleKey, table, cell, text, workItem, rankText, quadrantTag, tip } from './kit.mjs';
-import { strategyBrief, strategyOverview, competencyDecision, topicsSection } from './strategy.mjs';
+import { strategyBrief, competencyDecision, topicsSection } from './strategy.mjs';
+import { betBanner, siteGuide, betRole } from './guide.mjs';
 
 const visibleOf = (model) => model.competencies.filter((c) => c.visible);
 
@@ -226,10 +227,11 @@ export function homePage(ctx) {
       eyebrow: t.home.eyebrow(period.from, period.to),
       title: t.home.title,
       lead: t.home.lead,
-      extra: `${dataNote(ctx)}${tiles}${strategyBrief(ctx)}`,
+      extra: `${dataNote(ctx)}${tiles}`,
     }),
-    strategyOverview(ctx),
-    section('map', t.home.mapTitle, t.home.mapLead, `<details class="strategy-model-details"><summary>${esc(ctx.lang === 'ru' ? 'Открыть дополнительную карту специализации за 2016–2025' : 'Open the additional 2016–2025 specialisation map')}</summary>${map}${quadrantGrid(ctx)}</details>`),
+    section('key-findings', ctx.lang === 'ru' ? 'Главное' : 'Key findings', ctx.lang === 'ru' ? 'Короткий ответ: на чём стоит наука СТАНКИН, куда смещается мир, где мы теряем темп и какую ставку предлагаем сделать в заявке ПИШ.' : 'The short answer: what STANKIN research stands on, where world research is shifting, where we are losing ground and what we propose to bet on in the PISH application.', `${betBanner(ctx)}${strategyBrief(ctx)}`, { cls: 'section-tight home-key' }),
+    section('site-guide', ctx.lang === 'ru' ? 'Что где смотреть' : 'Where to look', ctx.lang === 'ru' ? 'Каждый раздел отвечает на один вопрос. Числа везде пересчитываются из одного снимка OpenAlex.' : 'Each section answers one question. All numbers are recalculated from the same OpenAlex snapshot.', siteGuide(ctx), { cls: 'section-tight' }),
+    section('map', t.home.mapTitle, t.home.mapLead, `${map}${quadrantGrid(ctx)}`),
     section('dynamics-section', t.home.dynamicsTitle, t.home.dynamicsLead(ctx.change(m.growthOwn), ctx.change(m.growthWorld), period.p1, period.p2), `<div class="grid-2">${dynamics}${perYear}</div>`),
     section('venues-section', t.home.venuesTitle, t.home.venuesLead, `<div class="grid-side">${venues}<div class="side-box"><p class="side-title">${esc(t.home.venuesKinds)}</p>${kindList}</div></div>`),
     section('collab-section', t.home.collabTitle, t.home.collabLead, `<div class="grid-side">${collab}<div class="side-box">
@@ -424,7 +426,7 @@ export function competencyPage(ctx, c, { prev, next }) {
       crumb: crumbs,
       title: def.name[ctx.lang],
       lead: def.summary[ctx.lang],
-      extra: `${tiles}<div class="facts">${sentences.map((s) => `<p>${esc(s)}</p>`).join('')}</div>${position}${competencyDecision(ctx,c)}`,
+      extra: `${tiles}<div class="facts">${sentences.map((s) => `<p>${esc(s)}</p>`).join('')}</div>${position}${competencyDecision(ctx,c)}${betRole(ctx,c.id)}`,
     }),
     section('years', t.competency.dynamicsTitle, '', dynamics),
     section('leaders', t.competency.leadersTitle, '', leaders),
@@ -478,6 +480,7 @@ export function collaborationPage(ctx) {
   );
   return [
     hero(ctx, { eyebrow: t.site.university, title: t.collaboration.title, lead: t.collaboration.lead, extra: `${dataNote(ctx)}${tiles}` }),
+    section('pish-implication', ctx.lang === 'ru' ? 'Что это значит для заявки ПИШ' : 'What this means for the PISH application', '', `<div class="collab-implication"><div class="collab-implication-figure"><strong>${esc(ctx.pct(col.companyShare))}</strong><span>${esc(ctx.lang === 'ru' ? 'работ с соавторами из промышленных компаний' : 'of works with industrial co-authors')}</span></div><div><p>${esc(ctx.lang === 'ru' ? 'Кооперация даёт 40% оценки заявки, а квалифицированный заказчик должен вложить не меньше 50% бюджетных средств. Совместных публикаций с компаниями пока мало: опыт работы с промышленностью придётся подтверждать договорами, испытаниями и актами, а не статьями. Совместные работы с заказчиком — измеримый показатель для первых лет новой школы.' : 'Cooperation carries 40% of the assessment, and the qualified customer must contribute at least 50% of the budget funding. Joint papers with companies are still rare: industrial experience must be shown through contracts, trials and acceptance records rather than papers. Joint work with the customer is a measurable indicator for the new school’s first years.')}</p><p><a class="text-link" href="${esc(ctx.page('pish/'))}#pish-cooperation">${esc(ctx.lang === 'ru' ? 'Кооперация в ставке ПИШ' : 'Cooperation in the PISH bet')}</a></p></div></div>`, { cls: 'section-tight' }),
     section('countries-section', t.collaboration.countriesTitle, t.collaboration.countriesLead, `<div class="grid-side">${countries}${intl}</div>`),
     section('foreign', t.collaboration.foreignTitle, '', orgTable(col.partnersForeign)),
     section('home', t.collaboration.homeTitle, '', orgTable(col.partnersHome)),
@@ -496,6 +499,17 @@ export function methodPage(ctx, { competencies }) {
   const ids = meta.institutionIds.join(', ');
   const cov = model.coverage;
   const blocks = [];
+  const auditInfo = meta.affiliationAudit;
+  const checks = model.pish?.mathAudit?.checks ?? [];
+  const steps = [
+    [ctx.lang === 'ru' ? 'Выгрузка OpenAlex' : 'OpenAlex export', auditInfo?.applied ? ctx.int(auditInfo.rawUnique) : ctx.int(model.totals.n), ctx.lang === 'ru' ? `работ ${p.from}–${p.to}, снимок ${ctx.date(meta.fetchedAt)}` : `works ${p.from}–${p.to}, snapshot ${ctx.date(meta.fetchedAt)}`],
+    [ctx.lang === 'ru' ? 'Аудит аффилиаций' : 'Affiliation audit', auditInfo?.applied ? `−${ctx.int(auditInfo.excluded)}` : '—', auditInfo?.applied ? (ctx.lang === 'ru' ? 'ошибочно приписанных работ исключено' : 'misattributed works excluded') : (ctx.lang === 'ru' ? 'в этом снимке не применён' : 'not applied in this snapshot')],
+    [ctx.lang === 'ru' ? 'Корпус университета' : 'University corpus', ctx.int(model.totals.n), ctx.lang === 'ru' ? 'работ в расчёте всех показателей' : 'works behind every indicator'],
+    [ctx.lang === 'ru' ? 'Темы → компетенции' : 'Topics → competencies', ctx.pct(cov.classifiedWorks ? cov.assignedWorks / cov.classifiedWorks : null), ctx.lang === 'ru' ? `работ с темой отнесено к ${visibleOf(model).length} направлениям` : `of works with a topic assigned to ${visibleOf(model).length} fields`],
+    [ctx.lang === 'ru' ? 'Показатели и мир' : 'Indicators vs world', ctx.lang === 'ru' ? 'FWCI · топ-10 %' : 'FWCI · top 10%', ctx.lang === 'ru' ? 'те же годы и типы работ у вуза и мира' : 'same years and document types for the university and the world'],
+    [ctx.lang === 'ru' ? 'Проверки перед публикацией' : 'Pre-publication checks', checks.length ? `${ctx.int(checks.filter(c => c.passed).length)}/${ctx.int(checks.length)}` : '—', ctx.lang === 'ru' ? 'численных проверок корпуса проходят' : 'numerical corpus checks pass'],
+  ];
+  blocks.push(tightSection('pipeline', ctx.lang === 'ru' ? 'Как данные превращаются в выводы' : 'How data become conclusions', ctx.lang === 'ru' ? 'Шесть шагов от выгрузки до страницы. Сборка останавливается, если проверка на любом шаге не проходит.' : 'Six steps from export to page. The build stops if any step fails its checks.', `<ol class="pipeline">${steps.map(([title, value, note], i) => `<li><span class="pipeline-step">${String(i + 1).padStart(2, '0')}</span><h3>${esc(title)}</h3><strong>${esc(value)}</strong><p>${esc(note)}</p></li>`).join('')}</ol>`));
   blocks.push(tightSection('source', t.method.sourceTitle, '', `<p>${esc(t.method.source({ date: ctx.date(meta.fetchedAt), ids, ror: meta.institution?.ror ?? '—' }))}</p>`));
   const audit = meta.affiliationAudit;
   const affiliationSummary = audit?.applied

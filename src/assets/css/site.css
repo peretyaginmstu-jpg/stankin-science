@@ -370,3 +370,45 @@ table.data tr.gap>*{padding:4px 12px;color:var(--muted);background:transparent}
   .chart,.kpi,.card,.table-wrap{break-inside:avoid;background:#fff}
   .chart-table[open] .table-wrap,.chart-table .table-wrap{display:block}
 }
+
+/* Shared blocks: PISH bet banner, site guide, role of a competency in the bet. */
+.bet-banner{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(220px,1fr);gap:24px 36px;align-items:center;margin:22px 0;padding:24px 26px;background:var(--header);color:var(--header-ink);border-radius:var(--radius)}
+.bet-banner .eyebrow{color:var(--header-muted);margin:0 0 8px}
+.bet-banner h2{font-family:var(--sans);font-size:clamp(22px,2.4vw,30px);font-weight:600;letter-spacing:-.02em;line-height:1.2;margin:0 0 10px;color:var(--header-ink)}
+.bet-banner p{font-size:14px;line-height:1.55;color:var(--header-ink);max-width:70ch}
+.bet-banner-actions{display:grid;gap:10px}
+.bet-banner-actions a{display:block;padding:12px 15px;border:1px solid var(--header-line);border-radius:5px;color:var(--header-ink);text-decoration:none;font-size:14px;font-weight:500}
+.bet-banner-actions a:hover{border-color:var(--header-ink)}
+.bet-banner-actions .bet-banner-primary{background:var(--cool);border-color:var(--cool);color:#fff;font-weight:600}
+.hero .bet-banner{margin-top:26px}
+.site-guide{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.site-guide-card{display:flex;flex-direction:column;gap:7px;padding:16px 17px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);text-decoration:none;color:var(--ink);transition:border-color .15s}
+.site-guide-card:hover,.site-guide-card:focus-visible{border-color:var(--cool)}
+.site-guide-card strong{font-size:16px;font-weight:600;line-height:1.3}
+.site-guide-card span:last-child{font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+.site-guide-index{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+.site-guide-key{border:2px solid var(--cool);background:var(--cool-wash)}
+.site-guide-key .site-guide-index{color:var(--cool)}
+.home-key .strategy-brief{margin-top:0}
+.bet-role{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline;margin-top:14px;padding:12px 16px;border:1px solid var(--line);border-left:4px solid var(--cool);background:var(--surface);border-radius:5px;font-size:13px;line-height:1.5;max-width:92ch}
+.bet-role span{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.bet-role-gap{border-left-color:var(--accent)}
+.bet-role-object,.bet-role-next{border-left-color:var(--context)}
+@media(max-width:960px){.site-guide{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.bet-banner{grid-template-columns:1fr;padding:19px}.bet-role{grid-template-columns:1fr}}
+@media(max-width:460px){.site-guide{grid-template-columns:1fr}}
+@media print{.bet-banner{background:#f3efe6;color:#252420}.bet-banner h2,.bet-banner p{color:#252420}.bet-banner-actions,.site-guide{display:none}}
+.pipeline{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;counter-reset:none}
+.pipeline li{position:relative;display:flex;flex-direction:column;gap:6px;padding:15px 14px 16px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--cool);border-radius:5px}
+.pipeline li:not(:last-child):after{content:"→";position:absolute;right:-12px;top:50%;transform:translate(50%,-50%);color:var(--muted);font-size:16px;z-index:1}
+.pipeline li:last-child{border-top-color:var(--accent)}
+.pipeline-step{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+.pipeline h3{font-size:14px;line-height:1.35;margin:0}
+.pipeline strong{font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.pipeline p{font-size:11.5px;line-height:1.45;color:var(--ink-2);margin:0}
+.collab-implication{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:center;padding:20px 22px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--cool);border-radius:var(--radius)}
+.collab-implication-figure strong{display:block;font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.collab-implication-figure span{font-size:12px;color:var(--muted)}
+.collab-implication p{font-size:14px;line-height:1.55;max-width:80ch}
+@media(max-width:1050px){.pipeline{grid-template-columns:repeat(3,minmax(0,1fr))}.pipeline li:nth-child(3):after{display:none}}
+@media(max-width:600px){.pipeline{grid-template-columns:1fr}.pipeline li:after{content:"↓"!important;display:block!important;right:50%;top:auto;bottom:-12px;transform:translate(50%,50%)}.pipeline li:last-child:after{display:none!important}.collab-implication{grid-template-columns:1fr}}

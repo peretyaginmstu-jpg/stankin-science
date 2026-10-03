@@ -24,7 +24,8 @@ export async function initWorldTrends(root) {
   const num = (value, digits = 0) => finite(value)
     ? new Intl.NumberFormat(en ? 'en' : 'ru', { maximumFractionDigits: digits }).format(value) : '—';
   const change = value => finite(value) ? `${value > 0 ? '+' : ''}${num(value * 100, 1)}%` : '—';
-  const share = value => finite(value) ? `${num(value * 100, 5)}%` : '—';
+  // Shares of world output are tiny; three significant digits keep them readable and comparable.
+  const share = value => finite(value) ? `${new Intl.NumberFormat(en ? 'en' : 'ru', { minimumSignificantDigits: 3, maximumSignificantDigits: 3 }).format(value * 100)}%` : '—';
   const localText = value => typeof value === 'string' ? value : value?.[language] ?? '';
   const name = item => localText(item.name) || item.id;
   const status = root.querySelector('[data-world-status]');
@@ -167,9 +168,13 @@ export async function initWorldTrends(root) {
     const yAxes = [{ type: 'category', inverse: true, data: rows.map(name), axisTick: { show: false },
       axisLine: { show: false }, axisLabel: { fontSize: compact ? 11 : 12, lineHeight: 14,
         width: labelWidth, overflow: 'truncate', formatter: value => wrapLabel(value, narrow ? 20 : compact ? 32 : 36) } }];
-    const xAxes = [{ type: 'value', min: axisMin < 0 ? axisMin - padding : 0,
-      max: axisMax > 0 ? axisMax + padding : 0, axisLine: { show: false }, axisTick: { show: false },
-      splitNumber: compact ? 3 : 4, axisLabel: { fontSize: 11, formatter: value => `${num(value)}%` },
+    // Round the bounds to whole ticks so the axis never ends on an odd label such as 115%.
+    const rawMin = axisMin < 0 ? axisMin - padding : 0, rawMax = axisMax > 0 ? axisMax + padding : 0;
+    const span = Math.max(1, rawMax - rawMin), magnitude = 10 ** Math.floor(Math.log10(span / 4));
+    const step = [1, 2, 2.5, 5, 10].map(k => k * magnitude).find(v => span / v <= (compact ? 4 : 6)) ?? 10 * magnitude;
+    const xAxes = [{ type: 'value', min: Math.floor(rawMin / step) * step,
+      max: Math.ceil(rawMax / step) * step, interval: step, axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { fontSize: 11, formatter: value => `${num(value)}%` },
       splitLine: { lineStyle: { color: '#e0e6eb' } } }];
     const series = [{ name: metricTitle, type: 'bar', barMaxWidth: 24,
       data: rows.map(item => ({ id: item.id, value: finite(selectedMetric(item)) ? selectedMetric(item) * 100 : null,
